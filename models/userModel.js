@@ -1,4 +1,5 @@
 require("dotenv").config()
+const bcrypt = require("bcrypt")
 
 const {PrismaClient}  = require("@prisma/client");
 const prisma = new PrismaClient();
@@ -9,7 +10,7 @@ module.exports = {
             data:  {
                 firstname: entries.firstname,
                 lastname: entries.lastname,
-                password: entries.password,
+                password: await bcrypt.hash(entries.password, 10),
                 username: entries.username,
                 Role: "USER"
             }
@@ -20,7 +21,7 @@ module.exports = {
             data:  {
                 firstname: entries.firstname,
                 lastname: entries.lastname,
-                password: entries.password,
+                password: await bcrypt.hash(entries.password, 10),
                 username: entries.username,
                 Role: "ADMIN"
             }
