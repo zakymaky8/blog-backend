@@ -21,6 +21,9 @@ module.exports = {
     },
 
     deletePost: async ( postId, user ) => {
+
+        const comments = await prisma.comment.findMany({where: {post_id: postId}});
+        await Promise.all(comments.map(async comment => await prisma.reply.deleteMany({where: {comment_id: comment.comments_id}})))
         await prisma.comment.deleteMany({where: {post_id: postId}});
         await prisma.post.delete({
             where: {
