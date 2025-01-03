@@ -19,6 +19,8 @@ module.exports = {
         const inCommentReplies = await prisma.reply.findMany({
             where: {
                 comment_id: commentId
+            },orderBy: {
+                createdAt: "asc"
             }
         })
         return inCommentReplies;
