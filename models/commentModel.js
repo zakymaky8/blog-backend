@@ -65,6 +65,9 @@ module.exports = {
         const comments = await prisma.comment.findMany({
             where: {
                     post_id: postId
+                   },
+                   orderBy: {
+                    createdAt: "asc"
                    }
         });
         return comments;
