@@ -41,6 +41,7 @@ const allUsersGet = async (req, res) => {
     }
 }
 
+
 module.exports = {
     registerUser,
     registerAdmin,
