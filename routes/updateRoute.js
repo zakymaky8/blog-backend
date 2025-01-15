@@ -1,5 +1,5 @@
 const { Router } = require("express");
-const { updatePost, updateComment, updateReply } = require("../controllers/updateController");
+const { updatePost, updateComment, updateReply, updateUserPwdPut } = require("../controllers/updateController");
 const { authenticateUser } = require("../auth/jwtauth");
 
 
@@ -13,6 +13,8 @@ updateRoute.put("/posts/:postId/comments/:commentId/:action", authenticateUser ,
 
 updateRoute.put("/posts/:postId/comments/:commentId/replies/:replyId/:action", authenticateUser, updateReply) // handler to update content, like and reply
 // updateRoute.post("/post/:postId")
+
+updateRoute.put("/user/change_password", authenticateUser, updateUserPwdPut)
 
 
 module.exports = {
