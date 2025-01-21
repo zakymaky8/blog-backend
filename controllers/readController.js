@@ -28,21 +28,28 @@ const unpublishedPostsGet = async (req, res) => {
 }
 
 
+
 const singlePostGet = async (req, res) => {
 
-    const post  = await Post.fetchSinglePost(req.params.postId);
-    const author = await User.fetchSingleUser(post.user_id);
-    if ( req.user && req.user.Role !== "ADMIN" && post.status === "DRAFT") {
-        return res.sendStatus(401)
-    } else {
+    const post  =
+            (req.user && req.user.Role === "ADMIN") ?
+            await Post.fetchSinglePost(req.params.postId) :
+            (req.user && req.user.Role === "USER") ?
+            await Post.fetchSinglePubPost(req.params.postId) : false
+
+    if (post) {
+        const author = await User.fetchSingleUser(post.user_id);
         return res.json({data: [post, author, req.user]})
+
+    } else {
+        return res.status(404).json({error: "The post was whether not found or deleted or unpublished!"})
     }
 }
 
 
 const commentsFetchGet = async (req, res) => {
     const { postId } = req.params;
-
+    
     const comments = await Comment.fetchComments(postId);
     const authors =  await Promise.all(comments.map(async comment => await User.fetchSingleUser(comment.user_id)));
     const repliesArray = await Promise.all(comments.map(async comment => await Reply.getRepliesPerComment(comment.comments_id)))
@@ -56,10 +63,38 @@ const commentsFetchGet = async (req, res) => {
     return res.json({data: [comments, authors, req.user, replies, replyActorPairs]})
 }
 
+const singleUserGet = async (req, res) => {
+    const { userId } = req.params;
+
+    const user = (req.user && req.user.Role === "ADMIN") ?
+     await User.fetchSingleUser(userId) : false
+
+    if (user) {
+        return res.json({user})
+    }
+    return res.status(404).json({error: "Account Terminated or Deleted!"})
+}
+
+
+
+const getSingleUserActivities = async (req, res) => {
+    const { userId } = req.params;
+    if (req.user && req.user.Role === "ADMIN") {
+        const user = await User.fetchSingleUser(userId)
+        const likedPosts = await User.getLikedPosts(userId)
+        const paired = await User.getCommentsAndTheirPosts(userId)
+        return res.json({user, likedPosts, paired})
+    } else {
+        return res.status(404).json({error: "access denied!"})
+    }
+}
+
 module.exports = {
     allPublishedPostsGet,
     singlePostGet,
     commentsFetchGet,
     postsWithCommentsAndUsersGet,
-    unpublishedPostsGet
+    unpublishedPostsGet,
+    singleUserGet,
+    getSingleUserActivities
 }

@@ -1,0 +1,24 @@
+{
+  "name": "blog-backend",
+  "version": "1.0.0",
+  "description": "Back-end blog api for CRUDing on posts and comments",
+  "main": "app.js",
+  "scripts": {
+  },
+  "keywords": ["blog", "blogger", "api"],
+  "author": "zekaryas",
+  "license": "zekaryas",
+  "dependencies": {
+    "@quixo3/prisma-session-store": "^3.1.13",
+    "bcrypt": "^5.1.1",
+    "body-parser": "^1.20.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.1",
+    "express-validator": "^7.2.0",
+    "jsonwebtoken": "^9.0.2",
+    "method-override": "^3.0.0",
+    "pg": "^8.13.1",
+    "prisma": "^5.22.0"
+  }
+}

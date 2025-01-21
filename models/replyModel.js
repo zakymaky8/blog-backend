@@ -23,7 +23,7 @@ module.exports = {
                 createdAt: "asc"
             }
         })
-        return inCommentReplies;
+        return inCommentReplies.sort((a, b) => a.createdAt - b.createdAt);
     },
     fetchSingleReply: async (replyId) => {
          return  await prisma.reply.findFirst({where: {replies_id: replyId}})
@@ -34,9 +34,9 @@ module.exports = {
             where: {
                 user_id: user.users_id,
                 comment_id: commentId,
-                replies_id: replyId
+                replies_id: replyId,
             },
-            data: { content: entries.content }
+            data: { content: entries.content, isUpdated: true }
         })
     },
 

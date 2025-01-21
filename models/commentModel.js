@@ -1,10 +1,6 @@
 const {PrismaClient}  = require("@prisma/client");
 const prisma = new PrismaClient();
 
-//  all methods considered as utility function so they have no
-// error handlers if neccessary handle the possible errorthat
-//  comes out these methods should be handled on wherever they
-//  are used
 
 module.exports = {
     createCommentByUser: async (postId, entries, user) => { //
@@ -16,13 +12,7 @@ module.exports = {
             }
         })
     },
-    // createComment: async (entries) => {
-    //     await prisma.comment.create({
-    //         data: {
-    //             content: "" // by admin
-    //         }
-    //     })
-    // }
+
     //  with right authorship
     deleteCommentByUser: async (postId, commentId, user) => {
         await prisma.reply.deleteMany({where: {comment_id: commentId}});
@@ -54,9 +44,9 @@ module.exports = {
             where: {
                 user_id: user.users_id,
                 post_id: postId,
-                comments_id: commentId
+                comments_id: commentId,
             },
-            data: { content: entries.content }
+            data: { content: entries.content, isUpdated: true }
         })
     },
 
@@ -70,12 +60,12 @@ module.exports = {
                     createdAt: "asc"
                    }
         });
-        return comments;
+        return comments.sort((a, b)=> a.createdAt - b.createdAt);
     },
 
     fetchAllComments: async () => {
         const allComments = await prisma.comment.findMany();
-        return allComments;
+        return allComments.sort((a, b) => a.createdAt - b.createdAt);
     },
 
     fetchSingleComment: async (user, commentId) => {
@@ -91,7 +81,7 @@ module.exports = {
     getOneCommentWithNoUser: async (commentId) => {
         return await prisma.comment.findFirst({where: {comments_id: commentId}})
     },
-    
+
     likeUnlikeComment: async (postId, commentId, user) => {
         const comment = await prisma.comment.findFirst({
             where: {

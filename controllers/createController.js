@@ -4,8 +4,9 @@ const Reply = require("../models/replyModel")
 const User = require("../models/userModel")
 
 const postCreatePost = async (req, res) => {
+    const { status } = req.query;
     if (req.user && req.user.Role === "ADMIN") {
-        await Post.createPost(req.body, req.params.postStatus, req.user);
+        await Post.createPost(req.body, status, req.user);
         res.sendStatus(200)
     } else {
         return res.status(403).json({error: "login first"})
@@ -15,7 +16,7 @@ const postCreatePost = async (req, res) => {
 const commentCreatePost = async (req, res) => {
 
     const { postId } = req.params;
-    
+
     if (req.user) {
         await Comment.createCommentByUser(postId, req.body, req.user);
         return res.sendStatus(200)
@@ -24,7 +25,8 @@ const commentCreatePost = async (req, res) => {
     }
 }
 const replyCreatePost = async (req, res) => {
-    const { postId, commentId, action, replyId } = req.params;
+    const { postId, commentId, replyId } = req.params;
+    const { action } = req.query;
     
     if (req.user && action === "to_comment") {
         const comment = await Comment.getOneCommentWithNoUser(commentId);

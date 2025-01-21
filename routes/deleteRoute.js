@@ -1,5 +1,5 @@
 const { Router } = require("express");
-const { postDeletePost, commentDeletePost, deleteReply } = require("../controllers/deleteController");
+const { postDeletePost, commentDeletePost, deleteReply, deleteOneUser } = require("../controllers/deleteController");
 const { authenticateUser } = require("../auth/jwtauth");
 
 const deleteRouter = Router();
@@ -26,6 +26,12 @@ deleteRouter
     )
 
 
+deleteRouter
+    .delete(
+        "/user/:userId",
+        authenticateUser,
+        deleteOneUser
+    )
 
 module.exports = {
     deleteRouter

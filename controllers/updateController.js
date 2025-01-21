@@ -1,9 +1,11 @@
 const Post = require("../models/postModel");
 const Comment = require("../models/commentModel");
 const Reply = require("../models/replyModel");
+const User = require("../models/userModel");
 
-const updatePost = async (req, res) => { // there might be change in params to query parameters
-    const { action, postId } = req.params;
+const updatePost = async (req, res) => {
+    const { postId } = req.params;
+    const { action } = req.query;
     
     if (req.user && req.user.Role === "ADMIN" && action === "publish") {
         await Post.publishPost(postId)
@@ -27,7 +29,9 @@ const updatePost = async (req, res) => { // there might be change in params to q
 
 
 const updateComment = async (req, res) => {
-    const {postId, commentId, action} = req.params;
+    const {postId, commentId} = req.params;
+    const { action } = req.query;
+
     if (req.user && action ==="like_unlike") {
         await Comment.likeUnlikeComment(postId, commentId, req.user)
         return res.sendStatus(200)
@@ -40,7 +44,8 @@ const updateComment = async (req, res) => {
 }
 
 const updateReply = async (req, res) => {
-    const {postId, commentId, replyId, action} = req.params;
+    const {postId, commentId, replyId} = req.params;
+    const  {action} = req.query;
     
     if (req.user && action ==="like_unlike") {
         await Reply.likeUnlikeReply(replyId, commentId, req.user)
@@ -53,8 +58,19 @@ const updateReply = async (req, res) => {
     }
 }
 
+
+const updateUserPwdPut = async (req, res) => {
+    const updated = await User.changePassword(req.user, req.body);
+    if (updated) {
+        res.json({message: "Password changed successfully"})
+    } else {
+        res.status(401).json({ error: "May be you've forgotten the old one!" })
+    }
+}
+
 module.exports = {
     updatePost,
     updateComment,
-    updateReply
+    updateReply,
+    updateUserPwdPut
 }

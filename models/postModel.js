@@ -15,7 +15,9 @@ module.exports = {
                 content: entries.content,
                 status: status,
                 user_id: user.users_id,
-                title: entries.title
+                title: entries.title,
+                excerpt: entries.excerpt,
+                readTime: +entries.timeRead
             }
         })
     },
@@ -33,22 +35,18 @@ module.exports = {
         });
     },
     // update post regardless of the user
-    updatePostFromEdit: async (postId, entries, status) => {
-        // const post = await prisma.comment.findFirst({
-        //     where: {
-        //         posts_id: postId
-        //     }
-        // })
+    updatePostFromEdit: async (postId, entries) => {
         await prisma.post.update({
             where: {
-                // user_id: user.users_id,
                 posts_id: postId
             },
             data: {
                 content: entries.content,
-                // likes: post.likes + 1,
                 title: entries.title,
+                excerpt: entries.excerpt,
+                readTime: +entries.timeRead,
                 lastUpdate: new Date(),
+                isUpdated: true
             }
         })
     },
@@ -73,17 +71,7 @@ module.exports = {
             }
         })
     },
-    // likePost: async (postId, user) => {
-    //     const post = await prisma.post.findFirst({where:{posts_id: postId}})
-    //     await prisma.post.update({
-    //         where: {
-    //             posts_id: postId
-    //         },
-    //         data: {
-    //             likes: post.likes.push(user.users_id)
-    //         }
-    //     })
-    // },
+
     likeUnlikePost: async (postId, user) => {
         const post = await prisma.post.findFirst({where:{posts_id: postId}})
         const exists = post.likes.includes(user.users_id)
@@ -100,11 +88,10 @@ module.exports = {
             }
         })
     },
-    //  fetching all posts regardless of which user
 
     fetchPosts: async () => {
         const posts = await prisma.post.findMany();
-        return posts;
+        return posts.sort((a, b) => b.lastUpdate - a.lastUpdate);
     },
 
     fetchPublishedPosts: async () => {
@@ -113,7 +100,7 @@ module.exports = {
                 status: "PUBLISHED"
             }
         });
-        return posts;
+        return posts.sort((a, b) => b.createdAt - a.createdAt);
     },
     // fetching a single post
 
@@ -123,7 +110,25 @@ module.exports = {
                 posts_id: postId
             }
         })
-        return post
+        if (post) {
+            return post
+        } else {
+            return false
+        }
+    },
+
+    fetchSinglePubPost: async ( postId ) => {
+        const post = await prisma.post.findFirst({
+            where: {
+                posts_id: postId,
+                status: "PUBLISHED"
+            }
+        })
+        if (post) {
+            return post
+        } else {
+            return false
+        }
     },
 
     fetchUnpublishedPost: async () => {

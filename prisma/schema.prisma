@@ -1,0 +1,79 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Users {
+  users_id  String    @id @default(uuid())
+  firstname String
+  lastname  String
+  username  String    @unique
+  password  String
+  post      Post[]
+  Role      Role      @default(USER)
+  comments  Comment[]
+  replyer   Reply[]   @relation("replyer")
+  replied   Reply[]   @relation("replied_user")
+  isWarned  Boolean @default(false)
+}
+
+model Post {
+  posts_id   String    @id @default(uuid())
+  title      String
+  content    String
+  createdAt  DateTime  @default(now())
+  excerpt    String    @default("")
+  readTime   Int       @default(0)
+  lastUpdate DateTime  @updatedAt
+  postImgs   String[]
+  likes      String[]  @default([])
+  views      Int       @default(0)
+  user       Users     @relation(fields: [user_id], references: [users_id])
+  user_id    String
+  isUpdated  Boolean   @default(false)
+  comments   Comment[]
+  status     Status    @default(DRAFT)
+}
+
+model Comment {
+  comments_id String   @id @default(uuid())
+  content     String
+  createdAt   DateTime @default(now())
+  lastUpdate  DateTime @updatedAt
+  likes       String[] @default([])
+  post        Post     @relation(fields: [post_id], references: [posts_id])
+  post_id     String
+  user        Users    @relation(fields: [user_id], references: [users_id])
+  user_id     String
+  isUpdated   Boolean  @default(false)
+  reply       Reply[]
+}
+
+model Reply {
+  replies_id String   @id @default(uuid())
+  content    String
+  comment    Comment  @relation(fields: [comment_id], references: [comments_id])
+  comment_id String
+  user       Users    @relation("replyer", fields: [user_id], references: [users_id])
+  replied    Users    @relation("replied_user", fields: [replied_id], references: [users_id])
+  user_id    String
+  replied_id String
+  isUpdated  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  lastUpdate DateTime @default(now()) @updatedAt
+  likes      String[] @default([])
+}
+
+enum Status {
+  DRAFT
+  PUBLISHED
+}
+
+enum Role {
+  ADMIN
+  USER
+}
