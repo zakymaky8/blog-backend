@@ -5,7 +5,10 @@ const {PrismaClient}  = require("@prisma/client");
 const prisma = new PrismaClient();
 
 module.exports = {
+    // some pwd confimation, user exist and other validations goes here
     createUser: async (entries) => {
+        console.log(entries);
+        
         await prisma.users.create({
             data:  {
                 firstname: entries.firstname,

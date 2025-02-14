@@ -8,11 +8,11 @@ const registerUser = async (req, res) => {
     const users = await prisma.users.findMany();
     const exists = users.find(user => user.username === req.body.username);
     if (exists) {
-        return res.sendStatus(404)
+        return res.status(409).json({error: "username already exists", success: false})
     }
     else {
         await User.createUser(req.body)
-        return res.sendStatus(200)
+        return res.status(201).json({message: "User registered successfully!", success: true})
     }
 }
 
@@ -41,7 +41,9 @@ const allUsersGet = async (req, res) => {
     }
 }
 
-
+(async function() {
+    console.log(await prisma.users.findMany())
+})()
 
 
 module.exports = {

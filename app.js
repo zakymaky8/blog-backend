@@ -1,20 +1,20 @@
 const bodyParser = require("body-parser");
 const express = require("express");
-const {PrismaClient} = require("@prisma/client")
-const prisma = new PrismaClient();
+
 const app = express();
+
 const cors = require("cors");
+require("dotenv").config()
 
-const methodOverride = require("method-override");
-
-app.use(methodOverride("_method"));
-
+const PORT = process.env.PORT ?? 8080
 
 const { createRouter } = require("./routes/createRoute");
 const { readRoute } = require("./routes/readRoute");
 const indexRouter = require("./routes/indexRoute");
 const { deleteRouter } = require("./routes/deleteRoute");
 const { updateRoute } = require("./routes/updateRoute");
+
+//  app level middlewares
 
 app.use(express.urlencoded({extended: false}))
 app.use(bodyParser.json())
@@ -25,7 +25,6 @@ app.use(cors());
 // routers
 
 app.use("/", createRouter)
-
 app.use("/", indexRouter)
 app.use("/", readRoute)
 app.use("/", deleteRouter)
@@ -33,11 +32,9 @@ app.use("/", updateRoute)
 
 
 app.get("/", async (req, res) => {
-    res.json({message: "Welcome to web log api!"})
+    res.json({message: "Welcome to tip-logger api! Esure that you're verified and there you go!"})
 })
 
-
-
-app.listen(3456, () => {
-    console.log("server is listening at 3456");
+app.listen(PORT, () => {
+    console.log("App is listening on port ", PORT);
 })
