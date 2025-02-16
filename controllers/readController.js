@@ -2,28 +2,59 @@ const Comment = require("../models/commentModel");
 const Post = require("../models/postModel");
 const User = require("../models/userModel");
 const Reply = require("../models/replyModel");
+const { json } = require("body-parser");
 
 const allPublishedPostsGet = async (req, res) => {
     const posts  = await Post.fetchPublishedPosts();
-    return res.json({posts: posts})
+    if (!req.user) {
+        return res
+                .status(401)
+                .json({ success: false, message: "Missing credential, Login first!", posts: null })
+    }
+    return res
+            .status(200)
+            .json({success: true, message: "Successfull!", posts: posts})
 }
 
-const postsWithCommentsAndUsersGet = async (req, res) => {
+const allPostsForAdminGet = async (req, res) => {
     if ( req.user && req.user.Role === "ADMIN") {
         const posts = await Post.fetchPosts();
-        const comments = await Comment.fetchAllComments()
-        return res.json({posts: posts, comments: comments})
+
+        if (posts.length) {
+            return res
+                    .status(200)
+                    .json({success: true, message: "Successfull!", data: {posts}})
+        }
+
+    } else if (res.user.Role !== "ADMIN") {
+        return res
+                .status(403)
+                .json({success: false, message: "Access Denied!", data: { posts: null }})
+
     } else {
-        return res.sendStatus(403)
+        return res.status(401).json({success: false, message: "Please login first!", data: { posts: null }})
     }
 }
 
 const unpublishedPostsGet = async (req, res) => {
+
     if (req.user && req.user.Role === "ADMIN") {
         const posts = await Post.fetchUnpublishedPost();
-        return res.json({posts: posts})
-    } else {
-        return res.sendStatus(401)
+        return res
+                 .status(200)
+                 .json({success: true, message: "Successful!", data: {drafts: posts}})
+    }
+
+    if (req.user.Role !== "ADMIN") {
+        return res
+                .status(403)
+                .json({success: false, message: "Access Denied!", data: {drafts: null}})
+    }
+
+    else {
+        return res
+                .status(401)
+                .json({success: false, message: "Authentication failed, please login!", data: {drafts: null}})
     }
 }
 
@@ -39,53 +70,94 @@ const singlePostGet = async (req, res) => {
 
     if (post) {
         const author = await User.fetchSingleUser(post.user_id);
-        return res.json({data: [post, author, req.user]})
+        return res
+                .status(200)
+                .json({success: true, message: "Successfull!", data: {post, author, currentUser: req.user}})
 
     } else {
-        return res.status(404).json({error: "The post was whether not found or deleted or unpublished!"})
+        return res
+                .status(404)
+                .json({success: false, message: "The post was whether not found or deleted or unpublished!", data: null})
     }
 }
 
 
 const commentsFetchGet = async (req, res) => {
     const { postId } = req.params;
-    
+
     const comments = await Comment.fetchComments(postId);
-    const authors =  await Promise.all(comments.map(async comment => await User.fetchSingleUser(comment.user_id)));
-    const repliesArray = await Promise.all(comments.map(async comment => await Reply.getRepliesPerComment(comment.comments_id)))
-    const replies = repliesArray.flat();
-    const replyActorPairs = await Promise.all(replies.map(async reply =>{
-        return {
-            replier: await User.fetchSingleUser(reply.user_id),
-            replied_to: await User.fetchSingleUser(reply.replied_id)
-        }
-    } ))
-    return res.json({data: [comments, authors, req.user, replies, replyActorPairs]})
+    if (comments.length) {
+        const authors =  await Promise.all(comments.map(async comment => await User.fetchSingleUser(comment.user_id)));
+        const repliesArray = await Promise.all(comments.map(async comment => await Reply.getRepliesPerComment(comment.comments_id)))
+        const replies = repliesArray.flat();
+        const replyActorPairs = await Promise.all(replies.map(async reply =>{
+            return {
+                replier: await User.fetchSingleUser(reply.user_id),
+                replied_to: await User.fetchSingleUser(reply.replied_id)
+            }
+        } ))
+        return res
+                .status(200)
+                .json({ success: true, message: "Successfull!", data: {comments, authors, currentUser: req.user, replies, replyActorPairs}})
+    }
+    return res
+            .status(200)
+            .json({ success: true, message: "No comment!", data: {comments, authors: [], currentUser: req.user, replies: [], replyActorPairs: []}})
 }
 
 const singleUserGet = async (req, res) => {
     const { userId } = req.params;
 
-    const user = (req.user && req.user.Role === "ADMIN") ?
-     await User.fetchSingleUser(userId) : false
+    const user = await User.fetchSingleUser(userId)
 
-    if (user) {
-        return res.json({user})
+    if (user && req.user && req.user.Role === "ADMIN") {
+        return res
+                .status(200)
+                .json({success: true, message: "Successful!", data: { user }})
     }
-    return res.status(404).json({error: "Account Terminated or Deleted!"})
+    else if (!user) {
+        return res
+                .status(404)
+                .json({success: false, message: "Account Terminated or Deleted!", data: { user: null }})
+
+    }
+    else if (req.user && req.user.Role !== "ADMIN") {
+        return res
+                .status(403)
+                .json({success: false, message: "Access Denied!", data: {user: null}})
+    }
+    else {
+        return res
+                 .status(401)
+                 .json({success: false, message: "Please Login!", data: { user: null }})
+    }
 }
 
 
 
 const getSingleUserActivities = async (req, res) => {
     const { userId } = req.params;
-    if (req.user && req.user.Role === "ADMIN") {
-        const user = await User.fetchSingleUser(userId)
-        const likedPosts = await User.getLikedPosts(userId)
-        const paired = await User.getCommentsAndTheirPosts(userId)
-        return res.json({user, likedPosts, paired})
-    } else {
-        return res.status(404).json({error: "access denied!"})
+
+    const user = await User.fetchSingleUser(userId);
+
+    if (user && req.user && req.user.Role === "ADMIN") {
+        const likedPosts = await User.getLikedPosts(userId);
+        const paired = await User.getCommentsAndTheirPosts(userId);
+        return res
+                .status(200)
+                .json({success: true, message: "Successful!", data: {user, likedPosts, paired}})
+    }
+
+    if (!user) {
+        return res
+                .status(404)
+                .json({success: false, message: "User wasn't found!", data: { user: null, likedPosts: null, paired: null }})
+    }
+
+    if (req.user.Role !== "ADMIN") {
+        return res
+                .status(403)
+                .json({ success: false, message: "Access Denied!", data: { user: null, likedPosts: null, paired: null } })
     }
 }
 
@@ -93,7 +165,7 @@ module.exports = {
     allPublishedPostsGet,
     singlePostGet,
     commentsFetchGet,
-    postsWithCommentsAndUsersGet,
+    allPostsForAdminGet,
     unpublishedPostsGet,
     singleUserGet,
     getSingleUserActivities

@@ -24,11 +24,11 @@ app.use(cors());
 
 // routers
 
-app.use("/", createRouter)
-app.use("/", indexRouter)
-app.use("/", readRoute)
-app.use("/", deleteRouter)
-app.use("/", updateRoute)
+app.use("/api/", createRouter)
+app.use("/api/", indexRouter)
+app.use("/api/", readRoute)
+app.use("/api/", deleteRouter)
+app.use("/api/", updateRoute)
 
 
 app.get("/", async (req, res) => {

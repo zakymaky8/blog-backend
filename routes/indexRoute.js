@@ -3,6 +3,7 @@ require("dotenv").config()
 const { Router } = require("express")
 const { registerUser, registerAdmin, allUsersGet } = require("../controllers/indexController")
 const { getUserToken, getAdminToken, checkLoginStatus, authenticateUser } = require("../auth/jwtauth");
+const { OnlyPOSTReq } = require("../middlewares/methodValidator");
 
 
 const indexRouter = Router()
@@ -16,7 +17,7 @@ indexRouter.post("/login", getUserToken);
 
 indexRouter.post("/admin-register", registerAdmin)
 
-indexRouter.post("/admin-login", getAdminToken)
+indexRouter.post("/admin/login", OnlyPOSTReq, getAdminToken)
 
 
 indexRouter.get("/auth", checkLoginStatus )

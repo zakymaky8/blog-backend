@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 
 module.exports = {
     createReply: async (entries, mainCommentId, user, repliedCommentAuthorId, repliedReplyAuthorId) => {
-        await prisma.reply.create({
+        return await prisma.reply.create({
             data: {
                 content: entries.content,
                 comment_id: mainCommentId,
@@ -25,12 +25,11 @@ module.exports = {
         })
         return inCommentReplies.sort((a, b) => a.createdAt - b.createdAt);
     },
-    fetchSingleReply: async (replyId) => {
-         return  await prisma.reply.findFirst({where: {replies_id: replyId}})
-    },
+
+    fetchSingleReply: async (replyId) => await prisma.reply.findFirst({where: {replies_id: replyId}}),
 
     updateReply: async (user, commentId, entries, replyId) => {
-        await prisma.reply.update({
+        return await prisma.reply.update({
             where: {
                 user_id: user.users_id,
                 comment_id: commentId,
@@ -53,7 +52,7 @@ module.exports = {
         const liked = [...reply.likes, user.users_id]
         const likes = exists ? unliked : liked
 
-        await prisma.reply.update({
+        return await prisma.reply.update({
             where: {
                 replies_id: replyId,
                 comment_id: commentId,
@@ -64,21 +63,33 @@ module.exports = {
         })
     },
     deleteReplyByReplier: async (replyId, commentId, user) => {
-        await prisma.reply.delete({
-            where: {
-                replies_id: replyId,
-                comment_id: commentId,
-                user_id: user.users_id
-                }
+        const reply = await prisma.reply.findFirst({where: {replies_id: replyId}})
+        if (reply) {
+            await prisma.reply.delete({
+                where: {
+                    replies_id: replyId,
+                    comment_id: commentId,
+                    user_id: user.users_id
+                    }
             })
+            return reply
+        } else {
+            return false
+        }
     },
-    
+
     deleteReplyByAdmin: async (replyId, commentId) => {
-        await prisma.reply.delete({
-            where: {
-                replies_id: replyId,
-                comment_id: commentId,
-                }
+        const reply = await prisma.reply.findFirst({where: {replies_id: replyId}})
+        if (reply) {
+            await prisma.reply.delete({
+                where: {
+                    replies_id: replyId,
+                    comment_id: commentId,
+                    }
             })
+            return reply
+        } else {
+            return false
+        }
     },
 }

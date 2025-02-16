@@ -5,11 +5,8 @@ const {PrismaClient}  = require("@prisma/client");
 const prisma = new PrismaClient();
 
 module.exports = {
-    // some pwd confimation, user exist and other validations goes here
     createUser: async (entries) => {
-        console.log(entries);
-        
-        await prisma.users.create({
+        return await prisma.users.create({
             data:  {
                 firstname: entries.firstname,
                 lastname: entries.lastname,
@@ -20,7 +17,7 @@ module.exports = {
         })
     },
     createAdmin: async (entries) => {
-        await prisma.users.create({
+        return await prisma.users.create({
             data:  {
                 firstname: entries.firstname,
                 lastname: entries.lastname,
@@ -31,7 +28,7 @@ module.exports = {
         })
     },
     fetchAllUsers: async () => {
-        const users = await prisma.users.findMany();
+        const users = await prisma.users.findMany({ where: { Role: "USER" } });
         return users;
     },
 
@@ -68,18 +65,29 @@ module.exports = {
 
     deleteSingleUser: async (userId) => {
 
-        await prisma.reply.deleteMany({where: {user_id: userId}}) //delete all replies by the deleted user
+        const userExist = await prisma.users.findFirst({where: {users_id: userId}});
+
+        if (!userExist) {
+            return false
+        }
+
+        const reply = await  prisma.reply.findMany({where: {user_id: userId}});
+        if (reply.length) {
+            await prisma.reply.deleteMany({where: {user_id: userId}})
+        }
 
         const comments = await prisma.comment.findMany({where: {user_id: userId}});
-        await Promise.all(comments.map(async comment => await prisma.reply.deleteMany({where: {comment_id: comment.comments_id}})));
-        await prisma.comment.deleteMany({where: {user_id: userId}})
+        if (comments.length) {
+            await Promise.all(comments.map(async comment => await prisma.reply.deleteMany({where: {comment_id: comment.comments_id}})));
+            await prisma.comment.deleteMany({where: {user_id: userId}})
+        }
 
-        await prisma.users.delete({
+        const user = await prisma.users.delete({
             where: {
                 users_id: userId
             }
         })
-
+        return { deletedReplies: reply, deletedComments: comments, deletedUser: user }
     },
 
     getLikedPosts: async (userId) => {
@@ -104,8 +112,5 @@ module.exports = {
             }
         })) : null
         return paired
-
     }
 }
-
-// module.exports.getCommentsAndTheirPosts("3bbaa75c-3b45-4fc4-9a78-19b71b2b5e2d")
