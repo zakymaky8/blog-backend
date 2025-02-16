@@ -7,7 +7,7 @@ const createRouter = Router();
 // admin specific route
 createRouter.post("/create_post",
                             authenticateUser,
-                            postCreatePost) // change post status to query param
+                            postCreatePost)
 
 // common route
 createRouter.post("/posts/:postId/comments/", authenticateUser, commentCreatePost)

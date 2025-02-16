@@ -2,15 +2,9 @@ const {PrismaClient}  = require("@prisma/client");
 const prisma = new PrismaClient();
 
 
-
-// there might be a limit parameter here to be considered later
-//  with single user consideration if there are some updates on
-//  peoples flexibility to even create post of there own user
-// parameter will be passed here
-
 module.exports = {
     createPost: async (entries, status, user) => {
-        await prisma.post.create({
+        return await prisma.post.create({
             data: {
                 content: entries.content,
                 status: status,
@@ -23,16 +17,21 @@ module.exports = {
     },
 
     deletePost: async ( postId, user ) => {
-
-        const comments = await prisma.comment.findMany({where: {post_id: postId}});
-        await Promise.all(comments.map(async comment => await prisma.reply.deleteMany({where: {comment_id: comment.comments_id}})))
-        await prisma.comment.deleteMany({where: {post_id: postId}});
-        await prisma.post.delete({
-            where: {
-                user_id: user.users_id,
-                posts_id: postId
-            }
-        });
+        const post = await prisma.post.findFirst({ where: { posts_id: postId } });
+        if (post) {
+            const comments = await prisma.comment.findMany({where: {post_id: postId}});
+            await Promise.all(comments.map(async comment => await prisma.reply.deleteMany({where: {comment_id: comment.comments_id}})))
+            await prisma.comment.deleteMany({where: {post_id: postId}});
+            await prisma.post.delete({
+                where: {
+                    user_id: user.users_id,
+                    posts_id: postId
+                }
+            });
+            return post
+        } else {
+            return false
+        }
     },
     // update post regardless of the user
     updatePostFromEdit: async (postId, entries) => {

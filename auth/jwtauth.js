@@ -19,27 +19,37 @@ const getUserToken = async (req, res) => {
     } else if (user && !matches) {
         return res.sendStatus(403)
     } else {
-        const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {expiresIn: "2h"});
+        const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET);
         return res.json({token: token})
     }
 }
 
 const getAdminToken = async (req, res) => {
+
     const { username, password, admin_pwd } = req.body;
 
     const user = await prisma.users.findFirst({where: {username: username}})
     const matches = await bcrypt.compare(password, user.password);
 
     if (user && matches && user.Role === "ADMIN" && admin_pwd === process.env.ADMIN_PASSWORD ) {
+
         const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {expiresIn: "2h"});
-        return res.json({token: token})
+        return res
+                 .json({success: true, token: token, message: "Successfully Logged In!"})
     }
-    else if (!user || admin_pwd !== process.env.ADMIN_PASSWORD) {
-        return res.sendStatus(401)
-    } else if (user.Role !== "ADMIN") {
-        return res.sendStatus(403)
+    else if (!user) {
+        return res
+                 .status(404)
+                 .json({success: false, message: "User is not found", token: null})
+
+    } else if (user && user.Role !== "ADMIN" || admin_pwd !== process.env.ADMIN_PASSWORD) {
+        return res
+                 .status(403)
+                 .json({success: false, message: "Access Denied!", token: null})
     } else if (!matches) {
-        return res.sendStatus(403)
+        return res
+                 .status(401)
+                 .json({success: false, message: "Invalid Credential", token: null})
     }
 }
 
@@ -48,13 +58,17 @@ const getAdminToken = async (req, res) => {
 const authenticateUser = (req, res, next) => {
     const bearerHeader = req.headers["authorization"];
     const bearerToken = bearerHeader && bearerHeader.split(" ")[1];
-    
+
     if (!bearerToken) {
-        return res.sendStatus(401);
+        return res
+                 .status(401)
+                 .json({success: false, message: "Token is Missing!"});
     }
     jwt.verify(bearerToken, process.env.ACCESS_TOKEN_SECRET, (error, user) => {
         if (error) {
-            return res.sendStatus(403)
+            return res
+                     .status(400)
+                     .json({success: false, message: "Invalid token, please login again!"})
         }
         req.user = user;
         return next()
@@ -66,14 +80,23 @@ const checkLoginStatus = (req, res) => {
     const bearerToken = bearerHeader && bearerHeader.split(" ")[1];
 
     if (!bearerToken) {
-        return res.sendStatus(401);
+        return res
+                 .status(401)
+                 .json({success: false, message: "Please Log In!", user: null});
     }
     jwt.verify(bearerToken, process.env.ACCESS_TOKEN_SECRET, (error, user) => {
         if (error) {
-            return res.sendStatus(403)
+            return res
+                     .status(403)
+                     .json({success: false, message: "Access Denied!", user: null})
         }
         req.user = user;
-        return res.json({user})
+        const User = {...user};
+        delete User.password
+        delete User.users_id
+        return res
+                 .status(200)
+                 .json({ message: "Logged in!", success: true, user: {...User}})
     })
 }
 

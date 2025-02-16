@@ -4,7 +4,7 @@ const prisma = new PrismaClient();
 
 module.exports = {
     createCommentByUser: async (postId, entries, user) => { //
-        await prisma.comment.create({
+        return await prisma.comment.create({
             data: {
                 post_id: postId,
                 content: entries.content,
@@ -15,32 +15,44 @@ module.exports = {
 
     //  with right authorship
     deleteCommentByUser: async (postId, commentId, user) => {
-        await prisma.reply.deleteMany({where: {comment_id: commentId}});
-        await prisma.comment.delete({
-            where: {
-                user_id: user.users_id,
-                post_id: postId,
-                comments_id: commentId
-            }
-        });
+        const comment = await prisma.comment.findFirst({ where: { comments_id: commentId } });
+        if (comment) {
+            await prisma.reply.deleteMany({where: {comment_id: commentId}});
+            await prisma.comment.delete({
+                where: {
+                    user_id: user.users_id,
+                    post_id: postId,
+                    comments_id: commentId
+                }
+            });
+        } else {
+            return false
+        }
     },
+
 //  it shouldn't require who u are to delete when admin is deleting
 
     deleteSingleCommentByAdmin: async (postId, commentId) => {
-        await prisma.reply.deleteMany({where: {comment_id: commentId}})
-        await prisma.comment.delete({
-            where: {
-                comments_id: commentId,
-                post_id: postId
-            }
-        })
+        const comment = await prisma.comment.findFirst({ where: { comments_id: commentId } });
+        if (comment) {
+            await prisma.reply.deleteMany({where: {comment_id: commentId}})
+            await prisma.comment.delete({
+                where: {
+                    comments_id: commentId,
+                    post_id: postId
+                }
+            })
+            return comment
+        } else {
+            return false
+        }
     },
 
     deleteAllComments: async () => await prisma.comment.deleteMany(),
 
     // bear with this for the later time 👈👈👈👈👈👈👈
     updateCommentContent: async (postId, user, commentId, entries) => {
-        await prisma.comment.update({
+        return await prisma.comment.update({
             where: {
                 user_id: user.users_id,
                 post_id: postId,
@@ -51,14 +63,13 @@ module.exports = {
     },
 
     fetchComments: async (postId) => {
-        // there might be a limit parameter here to be considered later
         const comments = await prisma.comment.findMany({
             where: {
-                    post_id: postId
-                   },
-                   orderBy: {
-                    createdAt: "asc"
-                   }
+                post_id: postId
+            },
+            orderBy: {
+                createdAt: "asc"
+            }
         });
         return comments.sort((a, b)=> a.createdAt - b.createdAt);
     },
@@ -78,6 +89,8 @@ module.exports = {
         return comment
     },
 
+    fetchByCommentId: async commentId => await prisma.comment.findFirst({where: {comments_id: commentId}}),
+
     getOneCommentWithNoUser: async (commentId) => {
         return await prisma.comment.findFirst({where: {comments_id: commentId}})
     },
@@ -95,7 +108,7 @@ module.exports = {
         const liked = [...comment.likes, user.users_id]
         const likes = exists ? unliked : liked
 
-        await prisma.comment.update({
+        return await prisma.comment.update({
             where: {
                 post_id: postId,
                 comments_id: commentId,
