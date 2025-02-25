@@ -92,6 +92,8 @@ const deleteReply = async (req, res) => {
 
 const deleteOneUser = async (req, res) => {
     const { userId } = req.params;
+    console.log("userId", userId)
+    console.log("req.user.users_id", req.user.users_id)
     if (req.user && (req.user.users_id === userId || req.user.Role === "ADMIN")) {
         const deletionData = await User.deleteSingleUser(userId);
         if (deletionData) {

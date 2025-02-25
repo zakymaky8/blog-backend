@@ -2,7 +2,6 @@ const Comment = require("../models/commentModel");
 const Post = require("../models/postModel");
 const User = require("../models/userModel");
 const Reply = require("../models/replyModel");
-const { json } = require("body-parser");
 
 const allPublishedPostsGet = async (req, res) => {
     const posts  = await Post.fetchPublishedPosts();
@@ -161,6 +160,27 @@ const getSingleUserActivities = async (req, res) => {
     }
 }
 
+
+const allUsersGet = async (req, res) => {
+    if (req.user && req.user.Role === "ADMIN") {
+        const users = await User.fetchAllUsers();
+        return res
+                .status(200)
+                .json({success: true, message: "Successful!", data: { users }})
+    } if ( req.user.Role !== "ADMIN") {
+        return res
+                .status(403)
+                .json({ success: false, message: "Action Denied!", data: { users: null } })
+    }
+     else {
+        return res
+                 .status(401)
+                 .json({ success: false, message: "Please login!", data: { users: null }})
+     }
+}
+
+
+
 module.exports = {
     allPublishedPostsGet,
     singlePostGet,
@@ -168,5 +188,6 @@ module.exports = {
     allPostsForAdminGet,
     unpublishedPostsGet,
     singleUserGet,
-    getSingleUserActivities
+    getSingleUserActivities,
+    allUsersGet
 }

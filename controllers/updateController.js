@@ -139,9 +139,13 @@ const updateReply = async (req, res) => {
 const updateUserPwdPut = async (req, res) => {
     const updated = await User.changePassword(req.user, req.body);
     if (updated) {
-        res.json({message: "Password changed successfully"})
+        res
+            .status(200)
+            .json({success: true, message: "Password changed successfully", new_password: req.body.newpwd})
     } else {
-        res.status(401).json({ error: "May be you've forgotten the old one!" })
+        res
+            .status(400)
+            .json({ success: false, message: "May be you've forgotten the old one!", new_password: null })
     }
 }
 
