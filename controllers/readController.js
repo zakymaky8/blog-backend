@@ -16,14 +16,13 @@ const allPublishedPostsGet = async (req, res) => {
 }
 
 const allPostsForAdminGet = async (req, res) => {
+
     if ( req.user && req.user.Role === "ADMIN") {
         const posts = await Post.fetchPosts();
 
-        if (posts.length) {
-            return res
-                    .status(200)
-                    .json({success: true, message: "Successfull!", data: {posts}})
-        }
+        return res
+                .status(200)
+                .json({success: true, message: "Successfull!", data: {posts}})
 
     } else if (res.user.Role !== "ADMIN") {
         return res
