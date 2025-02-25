@@ -25,6 +25,7 @@ module.exports = {
                     comments_id: commentId
                 }
             });
+            return comment
         } else {
             return false
         }

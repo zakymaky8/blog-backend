@@ -10,17 +10,30 @@ const prisma = new PrismaClient();
 const getUserToken = async (req, res) => {
 
     const  { username, password } = req.body;
-    const user = await prisma.users.findFirst({where: {username: username}});
 
+
+    if ( !username || !password ) {
+        return res
+                .status(400)
+                .json({ success: false, message: "Missing credential(s)!", token: null })
+    }
+
+    const user = await prisma.users.findFirst({where: {username: username}});
     const matches = user ?  await bcrypt.compare(password, user.password) : false;
 
     if (!user) {
-        return res.sendStatus(401)
+        return res
+            .status(401)
+            .json({ success: false, message: "Invalid Credential!", token: null })
     } else if (user && !matches) {
-        return res.sendStatus(403)
-    } else {
+        return res
+                .status(401)
+                .json({ success: false, message: "Password Incorrect!", token: null })
+    } else if (user && matches) {
         const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET);
-        return res.json({token: token})
+        return res
+                .status(200)
+                .json({success: true, message: "Successfully Logged In!", token: token})
     }
 }
 
@@ -28,8 +41,14 @@ const getAdminToken = async (req, res) => {
 
     const { username, password, admin_pwd } = req.body;
 
+    if ( !username || !password || !admin_pwd) {
+        return res
+                .status(400)
+                .json({ success: false, message: "Missing credential(s)!", token: null })
+    }
+
     const user = await prisma.users.findFirst({where: {username: username}})
-    const matches = await bcrypt.compare(password, user.password);
+    const matches = user ? await bcrypt.compare(password, user.password) : false;
 
     if (user && matches && user.Role === "ADMIN" && admin_pwd === process.env.ADMIN_PASSWORD ) {
 
@@ -57,7 +76,7 @@ const getAdminToken = async (req, res) => {
 
 const authenticateUser = (req, res, next) => {
     const bearerHeader = req.headers["authorization"];
-    const bearerToken = bearerHeader && bearerHeader.split(" ")[1];
+    const bearerToken = bearerHeader ? bearerHeader.split(" ")[1] : null;
 
     if (!bearerToken) {
         return res
@@ -77,7 +96,7 @@ const authenticateUser = (req, res, next) => {
 
 const checkLoginStatus = (req, res) => {
     const bearerHeader = req.headers["authorization"];
-    const bearerToken = bearerHeader && bearerHeader.split(" ")[1];
+    const bearerToken = bearerHeader ? bearerHeader.split(" ")[1] : null;
 
     if (!bearerToken) {
         return res
@@ -93,10 +112,9 @@ const checkLoginStatus = (req, res) => {
         req.user = user;
         const User = {...user};
         delete User.password
-        delete User.users_id
         return res
                  .status(200)
-                 .json({ message: "Logged in!", success: true, user: {...User}})
+                 .json({ success: true, message: "Logged in!", user: {...User}})
     })
 }
 
