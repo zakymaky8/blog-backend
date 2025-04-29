@@ -13,6 +13,8 @@ const { readRoute } = require("./routes/readRoute");
 const indexRouter = require("./routes/indexRoute");
 const { deleteRouter } = require("./routes/deleteRoute");
 const { updateRoute } = require("./routes/updateRoute");
+const { currentUserGet } = require("./controllers/indexController");
+const { authenticateUser } = require("./auth/jwtauth");
 
 //  app level middlewares
 
@@ -34,6 +36,8 @@ app.use("/api/", updateRoute)
 app.get("/", async (req, res) => {
     res.json({message: "Welcome to tip-logger api! Esure that you're verified and there you go!"})
 })
+
+app.get("/api/current-user", authenticateUser, currentUserGet)
 
 app.listen(PORT, () => {
     console.log("App is listening on port ", PORT);

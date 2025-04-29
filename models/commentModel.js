@@ -49,9 +49,6 @@ module.exports = {
         }
     },
 
-    deleteAllComments: async () => await prisma.comment.deleteMany(),
-
-    // bear with this for the later time 👈👈👈👈👈👈👈
     updateCommentContent: async (postId, user, commentId, entries) => {
         return await prisma.comment.update({
             where: {
@@ -59,21 +56,35 @@ module.exports = {
                 post_id: postId,
                 comments_id: commentId,
             },
-            data: { content: entries.content, isUpdated: true }
+            data: { content: entries.content, isUpdated: true, lastUpdate: new Date() }
         })
     },
 
-    fetchComments: async (postId) => {
+    fetchComments: async (postId, search="", page=1, limit=8) => {
+
         const comments = await prisma.comment.findMany({
             where: {
-                post_id: postId
+                post_id: postId,
+                OR: [
+                    { content: { contains: search, mode: "insensitive" } },
+                ]
             },
             orderBy: {
                 createdAt: "asc"
-            }
+            },
+            skip: limit * (page-1),
+            take: limit
         });
-        return comments.sort((a, b)=> a.createdAt - b.createdAt);
+
+        const allComments = await prisma.comment.findMany({
+                where: {
+                    post_id: postId,
+                    content: { contains: search, mode: "insensitive" }
+                }
+            })
+        return {comments, allComments};
     },
+
 
     fetchAllComments: async () => {
         const allComments = await prisma.comment.findMany();
@@ -97,17 +108,18 @@ module.exports = {
     },
 
     likeUnlikeComment: async (postId, commentId, user) => {
-        const comment = await prisma.comment.findFirst({
-            where: {
-                    post_id: postId,
-                    comments_id: commentId
-                }
-            });
+        const comment = await prisma.comment.findFirst({where: {post_id: postId, comments_id: commentId}});
 
-        const exists = comment.likes.includes(user.users_id)
+        const like_exists = comment.likes.includes(user.users_id);
+        const dislike_exists = comment.dislikes.includes(user.users_id);
+
         const unliked = comment.likes.filter(likes => likes !== user.users_id)
-        const liked = [...comment.likes, user.users_id]
-        const likes = exists ? unliked : liked
+
+        const undo_dislike = comment.dislikes.filter(dislike => dislike !== user.users_id);
+
+        const likes = like_exists ? unliked : [...comment.likes, user.users_id];
+        const dislikes = dislike_exists ? undo_dislike : [...comment.dislikes]
+
 
         return await prisma.comment.update({
             where: {
@@ -115,7 +127,34 @@ module.exports = {
                 comments_id: commentId,
             },
             data: {
-                likes: likes
+                likes: likes,
+                dislikes: dislikes
+            }
+        })
+    },
+
+
+    dislikeUndoDislikeComment: async (postId, commentId, user) => {
+        const comment = await prisma.comment.findFirst({where: {post_id: postId, comments_id: commentId}});
+
+        const dislike_exists = comment.dislikes.includes(user.users_id);
+        const like_exists = comment.likes.includes(user.users_id);
+
+        const unliked = comment.likes.filter(likes => likes !== user.users_id)
+
+        const undo_dislike = comment.dislikes.filter(dislike => dislike !== user.users_id);
+
+        const likes = like_exists ? unliked : [...comment.likes];
+        const dislikes = dislike_exists ? undo_dislike : [...comment.dislikes, user.users_id]
+
+        return await prisma.comment.update({
+            where: {
+                post_id: postId,
+                comments_id: commentId,
+            },
+            data: {
+                likes: likes,
+                dislikes: dislikes
             }
         })
     },

@@ -8,43 +8,67 @@ datasource db {
 }
 
 model Users {
-  users_id  String    @id @default(uuid())
-  firstname String
-  lastname  String
-  username  String    @unique
-  password  String
-  post      Post[]
-  Role      Role      @default(USER)
-  comments  Comment[]
-  replyer   Reply[]   @relation("replyer")
-  replied   Reply[]   @relation("replied_user")
-  isWarned  Boolean @default(false)
+  users_id        String            @id @default(uuid())
+  firstname       String
+  lastname        String
+  username        String            @unique
+  password        String
+  post            Post[]
+  Role            Role              @default(USER)
+  comments        Comment[]
+  createdAt       DateTime          @default(now())
+  replyer         Reply[]           @relation("replyer")
+  replied         Reply[]           @relation("replied_user")
+  isWarned        Boolean           @default(false)
+  profilePic      String?
+  suggestedTopics SuggestedTopics[]
+}
+
+model SuggestedTopics {
+  suggns_id   String     @id @default(uuid())
+  priority    Priority   @default(MEDIUM)
+  user_id     String
+  user        Users      @relation(fields: [user_id], references: [users_id])
+  postsToSugg String[]
+  post        Post[]
+  upvote      String[]   @default([])
+  downvote    String[]   @default([])
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @default(now())
+  isVisible   Boolean    @default(false)
+  status      SuggStatus @default(PENDING)
+  content     String
 }
 
 model Post {
-  posts_id   String    @id @default(uuid())
-  title      String
-  content    String
-  createdAt  DateTime  @default(now())
-  excerpt    String    @default("")
-  readTime   Int       @default(0)
-  lastUpdate DateTime  @updatedAt
-  postImgs   String[]
-  likes      String[]  @default([])
-  views      Int       @default(0)
-  user       Users     @relation(fields: [user_id], references: [users_id])
-  user_id    String
-  isUpdated  Boolean   @default(false)
-  comments   Comment[]
-  status     Status    @default(DRAFT)
+  posts_id        String            @id @default(uuid())
+  title           String
+  content         String
+  createdAt       DateTime          @default(now())
+  excerpt         String            @default("")
+  readTime        Int               @default(0)
+  lastUpdate      DateTime          @default(now())
+  postImgs        String[]
+  priority        Priority          @default(MEDIUM)
+  likes           String[]          @default([])
+  dislikes        String[]          @default([])
+  views           String[]          @default([])
+  user            Users             @relation(fields: [user_id], references: [users_id])
+  user_id         String
+  isUpdated       Boolean           @default(false)
+  comments        Comment[]
+  status          Status            @default(DRAFT)
+  suggnsToPost    String[]
+  suggestedTopics SuggestedTopics[]
 }
 
 model Comment {
   comments_id String   @id @default(uuid())
   content     String
   createdAt   DateTime @default(now())
-  lastUpdate  DateTime @updatedAt
+  lastUpdate  DateTime @default(now())
   likes       String[] @default([])
+  dislikes    String[] @default([])
   post        Post     @relation(fields: [post_id], references: [posts_id])
   post_id     String
   user        Users    @relation(fields: [user_id], references: [users_id])
@@ -64,8 +88,9 @@ model Reply {
   replied_id String
   isUpdated  Boolean  @default(false)
   createdAt  DateTime @default(now())
-  lastUpdate DateTime @default(now()) @updatedAt
+  lastUpdate DateTime @default(now())
   likes      String[] @default([])
+  dislikes   String[] @default([])
 }
 
 enum Status {
@@ -76,4 +101,16 @@ enum Status {
 enum Role {
   ADMIN
   USER
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum SuggStatus {
+  DENIED
+  ADDRESSED
+  PENDING
 }

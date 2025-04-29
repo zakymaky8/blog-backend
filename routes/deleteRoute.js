@@ -3,7 +3,8 @@ const {
         deleteSinglePost,
         commentDeletePost,
         deleteReply,
-        deleteOneUser
+        deleteOneUser,
+        removeSuggestion
     } = require("../controllers/deleteController");
 
 const { authenticateUser } = require("../auth/jwtauth");
@@ -37,6 +38,13 @@ deleteRouter
         "/user/:userId",
         authenticateUser,
         deleteOneUser
+    )
+
+deleteRouter
+    .delete(
+        "/suggestions/:suggId",
+        authenticateUser,
+        removeSuggestion
     )
 
 module.exports = {

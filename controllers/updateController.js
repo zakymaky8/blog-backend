@@ -2,7 +2,7 @@ const Post = require("../models/postModel");
 const Comment = require("../models/commentModel");
 const Reply = require("../models/replyModel");
 const User = require("../models/userModel");
-
+const Suggestion = require("../models/suggestModel");
 
 
 const updatePost = async (req, res) => {
@@ -10,7 +10,7 @@ const updatePost = async (req, res) => {
     const { postId } = req.params;
     const { action } = req.query;
 
-    const allowedActions = ["publish", "unpublish", "like_unlike", "update"]
+    const allowedActions = ["publish", "unpublish", "like_unlike", "dislike_undo_dislike", "update"]
 
     if (req.user && req.user.Role === "ADMIN" && action === "publish") {
         await Post.publishPost(postId)
@@ -28,6 +28,13 @@ const updatePost = async (req, res) => {
 
     if (req.user && action === "like_unlike") {
         await Post.likeUnlikePost(postId, req.user)
+        return res
+                .status(200)
+                .json({ success: true, message: "Successful!" })
+    }
+
+    if (req.user && action === "dislike_undo_dislike") {
+        await Post.dislikeUndoDislikePost(postId, req.user)
         return res
                 .status(200)
                 .json({ success: true, message: "Successful!" })
@@ -60,11 +67,18 @@ const updateComment = async (req, res) => {
     const {postId, commentId} = req.params;
     const { action } = req.query;
 
-    const allowedActions = ["like_unlike", "update_content"];
+    const allowedActions = ["like_unlike", "dislike_undo_dislike", "update_content"];
     const comment = await Comment.fetchByCommentId(commentId);
 
     if (req.user && action ==="like_unlike") {
         const comment = await Comment.likeUnlikeComment(postId, commentId, req.user)
+        return res
+                .status(200)
+                .json({ success: true, message: "Successful!", comment})
+    }
+
+    if (req.user && action ==="dislike_undo_dislike") {
+        const comment = await Comment.dislikeUndoDislikeComment(postId, commentId, req.user)
         return res
                 .status(200)
                 .json({ success: true, message: "Successful!", comment})
@@ -99,11 +113,18 @@ const updateReply = async (req, res) => {
     const { postId, commentId, replyId } = req.params;
     const  { action } = req.query;
 
-    const allowedActions = ["like_unlike", "update_content"];
+    const allowedActions = ["like_unlike", "dislike_undo_dislike", "update_content"];
     const reply = await Reply.fetchSingleReply(replyId)
 
     if (req.user && action ==="like_unlike") {
         const reply = await Reply.likeUnlikeReply(replyId, commentId, req.user)
+        return res
+                .status(200)
+                .json({ success: true, message: "Successful!", reply })
+    }
+
+    if (req.user && action ==="dislike_undo_dislike") {
+        const reply = await Reply.dislikeUndoDislikeReply(replyId, commentId, req.user)
         return res
                 .status(200)
                 .json({ success: true, message: "Successful!", reply })
@@ -149,9 +170,53 @@ const updateUserPwdPut = async (req, res) => {
     }
 }
 
+
+const updateSuggestionPut = async (req, res) => {
+    const { suggId } = req.params;
+    if (req.body) {
+        await Suggestion.updateSuggestions(suggId, req.body);
+        return res
+                .status(200)
+                .json({ success: true, message: "Successfully Updated!" })
+    }
+    return res
+            .status(401)
+            .json({ success: false, message: "Missing Fields!" })
+}
+
+
+const updateSuggestionStatusPut = async (req, res) => {
+    const { suggId } = req.params;
+    if (req.body) {
+        await Suggestion.updateSuggestionStatus(suggId, req.body.status);
+        return res
+                .status(200)
+                .json({ success: true, message: "Status Successfully Updated!" })
+    }
+    return res
+            .status(401)
+            .json({ success: false, message: "Something is Missing!" })
+}
+
+
+const updatePostToSuggToPostPut = async (req, res) => {
+    if (req.body) {
+        await Suggestion.updateSuggToPostToSugg(req.body);
+        return res
+                .status(200)
+                .json({ success: true, message: "Relation Successfully Updated!" })
+    }
+    return res
+            .status(401)
+            .json({ success: false, message: "Something is Missing!" })
+}
+
 module.exports = {
     updatePost,
     updateComment,
     updateReply,
-    updateUserPwdPut
+    updateUserPwdPut,
+    updateSuggestionPut,
+    updateSuggestionStatusPut,
+    updatePostToSuggToPostPut
 }
