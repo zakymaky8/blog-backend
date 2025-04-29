@@ -112,6 +112,8 @@ const checkLoginStatus = (req, res) => {
         req.user = user;
         const User = {...user};
         delete User.password
+        console.log(user)
+        console.log(User)
         return res
                  .status(200)
                  .json({ success: true, message: "Logged in!", user: {...User}})
@@ -124,3 +126,4 @@ module.exports = {
     getAdminToken,
     checkLoginStatus
 }
+

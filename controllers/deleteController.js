@@ -2,6 +2,11 @@ const Post = require("../models/postModel")
 const Comment = require("../models/commentModel")
 const Reply = require("../models/replyModel")
 const User = require("../models/userModel")
+const Suggestion = require("../models/suggestModel");
+
+const { PrismaClient } = require("@prisma/client");
+const prisma = new PrismaClient()
+
 
 const deleteSinglePost = async (req, res) => {
     if (req.user && req.user.Role === "ADMIN") {
@@ -92,8 +97,6 @@ const deleteReply = async (req, res) => {
 
 const deleteOneUser = async (req, res) => {
     const { userId } = req.params;
-    console.log("userId", userId)
-    console.log("req.user.users_id", req.user.users_id)
     if (req.user && (req.user.users_id === userId || req.user.Role === "ADMIN")) {
         const deletionData = await User.deleteSingleUser(userId);
         if (deletionData) {
@@ -116,9 +119,25 @@ const deleteOneUser = async (req, res) => {
 }
 
 
+const removeSuggestion = async (req, res) => {
+    const { suggId } = req.params;
+    const sugg = await prisma.suggestedTopics.findFirst({where: { suggns_id: suggId }});
+    if (req.user.Role === "USER" && req.user.users_id !== sugg.user_id) {
+        return res
+                .status(403)
+                .json({ success: false, message: "Action Unauthorized!" })
+    }
+    await Suggestion.deleteSuggestions(suggId, req.user);
+    return res
+            .status(200)
+            .json({ success: true, message: "Successfully Deleted!" })
+}
+
+
 module.exports = {
     deleteSinglePost,
     commentDeletePost,
     deleteReply,
-    deleteOneUser
+    deleteOneUser,
+    removeSuggestion
 }

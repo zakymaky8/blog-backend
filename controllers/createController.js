@@ -2,6 +2,7 @@ const Comment = require("../models/commentModel");
 const Post = require("../models/postModel")
 const Reply = require("../models/replyModel")
 const User = require("../models/userModel")
+const Suggestion = require("../models/suggestModel");
 
 
 const postCreatePost = async (req, res) => {
@@ -9,8 +10,8 @@ const postCreatePost = async (req, res) => {
 
     const allowedStatuses = ["DRAFT", "PUBLISHED"];
 
-    const { title, excerpt, timeRead, content } = req.body;
-    const allFields = [title, excerpt, timeRead, content];
+    const { title, excerpt, timeRead, content, priority } = req.body;
+    const allFields = [title, excerpt, timeRead, content, priority];
 
     if (allFields.some(e => !Boolean(e))) {
         return res
@@ -113,8 +114,23 @@ const replyCreatePost = async (req, res) => {
 }
 
 
+const createSuggessionPost = async (req, res) => {
+    console.log(req.body)
+    if (req.body.content) {
+        await Suggestion.createSuggestions(req.user, req.body);
+        return res
+                .status(201)
+                .json({ success: true, message: "Successfully Created!" })
+    }
+    return res
+            .status(400)
+            .json({ success: false, message: "Missing Content!" })
+}
+
+
 module.exports = {
     postCreatePost,
     commentCreatePost,
-    replyCreatePost
+    replyCreatePost,
+    createSuggessionPost
 }

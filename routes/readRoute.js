@@ -6,7 +6,18 @@ const {
         unpublishedPostsGet,
         getSingleUserActivities,
         allPostsForAdminGet,
-        allUsersGet
+        allUsersGet,
+        highPriorityPostsGet,
+        onesSuggestionsGet,
+        othersSuggestionsGet,
+        allSuggestionsGet,
+        singleSuggestionGet,
+        postLikesGet,
+        postDislikesGet,
+        postViewsGet,
+        commentLikesGet,
+        commentDislikesGet,
+        commentRepliesGet
     } = require("../controllers/readController");
 
 const { authenticateUser } = require("../auth/jwtauth");
@@ -18,60 +29,130 @@ const readRoute = Router();
 
 
 readRoute.get(
-                "/posts",
-                authenticateUser,
-                limitAccess,
-                allPublishedPostsGet
-            )
+    "/posts",
+    authenticateUser,
+    limitAccess,
+    allPublishedPostsGet
+);
 
 readRoute.get(
-                "/user/current",
-                authenticateUser,
-                (req, res) => res.status(200).json({success: true, message: "Successful!", user: req.user})
-            )
+    "/posts/featured",
+    authenticateUser,
+    limitAccess,
+    highPriorityPostsGet
+);
 
 readRoute.get(
-                "/posts/:postId",
-                authenticateUser,
-                limitAccess,
-                singlePostGet
-            )
+    "/user/current",
+    authenticateUser,
+    (req, res) => res.status(200).json({success: true, message: "Successful!", user: req.user})
+)
 
 readRoute.get(
-                "/posts/:postId/comments/",
-                authenticateUser,
-                commentsFetchGet
-            )
+    "/posts/:postId",
+    authenticateUser,
+    limitAccess,
+    singlePostGet
+)
 
 readRoute.get(
-                "/manage_posts",
-                authenticateUser,
-                allPostsForAdminGet
-            )
+    "/posts/:postId/comments/",
+    authenticateUser,
+    commentsFetchGet
+)
 
 readRoute.get(
-                "/manage_posts/drafts",
-                authenticateUser,
-                unpublishedPostsGet
-            )
+    "/manage_posts",
+    authenticateUser,
+    allPostsForAdminGet
+)
 
 readRoute.get(
-                "/user/:userId",
-                authenticateUser,
-                singleUserGet
-            );
+    "/manage_posts/drafts",
+    authenticateUser,
+    unpublishedPostsGet
+)
 
 readRoute.get(
-                "/users",
-                authenticateUser,
-                allUsersGet
-            )
+    "/user/:userId",
+    authenticateUser,
+    singleUserGet
+);
 
 readRoute.get(
-                "/user/:userId/activities",
-                authenticateUser,
-                getSingleUserActivities
-            )
+    "/users",
+    authenticateUser,
+    allUsersGet
+)
+
+readRoute.get(
+    "/user/:userId/activities",
+    authenticateUser,
+    getSingleUserActivities
+);
+
+readRoute.get(
+    "/suggestions/user-suggestions",
+    authenticateUser,
+    onesSuggestionsGet
+);
+
+readRoute.get(
+    "/suggestions/others-suggestions",
+    authenticateUser,
+    othersSuggestionsGet
+);
+
+readRoute.get(
+    "/suggestions/all-suggestions",
+    authenticateUser,
+    allSuggestionsGet
+);
+
+readRoute.get(
+    "/suggestions/:suggId",
+    authenticateUser,
+    singleSuggestionGet
+);
+
+readRoute.get(
+    "/posts/likes/:postId",
+    authenticateUser,
+    postLikesGet
+);
+
+readRoute.get(
+    "/posts/dislikes/:postId",
+    authenticateUser,
+    postDislikesGet
+);
+
+readRoute.get(
+    "/posts/views/:postId",
+    authenticateUser,
+    postViewsGet
+);
+
+
+
+readRoute.get(
+    "/posts/:postId/comments/:commentId/likes",
+    authenticateUser,
+    commentLikesGet
+);
+
+readRoute.get(
+    "/posts/:postId/comments/:commentId/dislikes",
+    authenticateUser,
+    commentDislikesGet
+);
+
+readRoute.get(
+    "/posts/:postId/comments/:commentId/replies",
+    authenticateUser,
+    commentRepliesGet
+);
+
 
 module.exports = { readRoute }
 
