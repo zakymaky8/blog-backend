@@ -3,17 +3,19 @@ const Post = require("../models/postModel");
 const User = require("../models/userModel");
 const Reply = require("../models/replyModel");
 const Suggestion = require("../models/suggestModel");
+const jwt = require("jsonwebtoken");
 
 const allPublishedPostsGet = async (req, res) => {
 
     const { search, page, limit } = req.query;
 
-    if (!req.user) {
-        return res
-                .status(401)
-                .json({ success: false, message: "Missing credential, Login first!", posts: null })
-    }
+    // if (!req.user) {
+    //     return res
+    //             .status(401)
+    //             .json({ success: false, message: "Missing credential, Login first!", posts: null })
+    // }
     const { allPosts, currentPosts } = await Post.fetchPublishedPosts(search ? search : "", page ? +page : 1, limit ? +limit : 6);
+    
     return res
             .status(200)
             .json({
@@ -21,37 +23,37 @@ const allPublishedPostsGet = async (req, res) => {
                 message: "Successfull!",
                 posts: currentPosts,
                 meta: {
-                items_per_page: limit ? +limit : 6,
-                current_page_items: currentPosts.length,
-                current_page: page ? +page : 1,
-                total_items: allPosts.length,
-                total_pages: Math.ceil(allPosts.length / (limit ?  +limit : 6))
+                    items_per_page: limit ? +limit : 6,
+                    current_page_items: currentPosts.length,
+                    current_page: page ? +page : 1,
+                    total_items: allPosts.length,
+                    total_pages: Math.ceil(allPosts.length / (limit ?  +limit : 6))
                 }
             })
 }
 
 const highPriorityPostsGet = async (req, res) => {
     const { search, page, limit } = req.query;
-    if (!req.user) {
-        return res
-                .status(401)
-                .json({ success: false, message: "Missing credential, Login first!", posts: null })
-    }
+    // if (!req.user) {
+    //     return res
+    //             .status(401)
+    //             .json({ success: false, message: "Missing credential, Login first!", posts: null })
+    // }
     const { allPosts, current } = await Post.fetchHighPriorityPosts(search ? search : "", page ? +page : 1, limit ? +limit : 3);
     return res
-    .status(200)
-    .json({
-           success: true,
-           message: "Successfull!",
-           posts: current,
-           meta: {
-            items_per_page: limit ? +limit : 3,
-            current_page_items: current.length,
-            current_page: page ? +page : 1,
-            total_items: allPosts.length,
-            total_pages: Math.ceil(allPosts.length / (limit ?  +limit : 3))
-           }
-        })
+            .status(200)
+            .json({
+                success: true,
+                message: "Successfull!",
+                posts: current,
+                meta: {
+                    items_per_page: limit ? +limit : 3,
+                    current_page_items: current.length,
+                    current_page: page ? +page : 1,
+                    total_items: allPosts.length,
+                    total_pages: Math.ceil(allPosts.length / (limit ?  +limit : 3))
+                }
+            })
 }
 
 const allPostsForAdminGet = async (req, res) => {
@@ -128,17 +130,29 @@ const unpublishedPostsGet = async (req, res) => {
 
 const singlePostGet = async (req, res) => {
 
-    const {post, suggestions}  =
-            (req.user && req.user.Role === "ADMIN") ?
-            await Post.fetchSinglePost(req.params.postId, req.user) :
-            (req.user && req.user.Role === "USER") ?
-            await Post.fetchSinglePubPost(req.params.postId, req.user) : false
 
+    const bearerHeader = req.headers["authorization"];
+    const bearerToken = bearerHeader ? bearerHeader.split(" ")[1] : null;
+    let curUser = "";
+
+    if (bearerToken) {
+        jwt.verify(bearerToken, process.env.ACCESS_TOKEN_SECRET, (error, user) => {
+            if (!error) {
+                curUser = user
+            }
+        })
+    }
+
+    const { post, suggestions }  =
+            (req.user && req.user.Role === "ADMIN") ?
+            await Post.fetchSinglePost(req.params.slugId, req.user) : // track when it is the admin requesting
+            await Post.fetchSinglePubPost(req.params.slugId, req.user)
+    console.log("post post pstt tjdjg ", post)
     if (post) {
         const author = await User.fetchSingleUser(post.user_id);
         return res
                 .status(200)
-                .json({success: true, message: "Successfull!", data: {post, author, currentUser: req.user, suggestions}})
+                .json({success: true, message: "Successfull!", data: {post, author, currentUser: curUser ? curUser : null, suggestions}})
 
     } else {
         return res
@@ -171,7 +185,7 @@ const commentsFetchGet = async (req, res) => {
                 .json({
                     success: true,
                     message: "Successfull!",
-                    data: {comments, totalComments: allComments.length, authors, currentUser: req.user, replies, replyActorPairs},
+                    data: {comments, totalComments: allComments.length, authors, currentUser: req.user ? req.user : null, replies, replyActorPairs},
                     meta: {
                         items_per_page: limit ? +limit : 8,
                         current_page_items: comments.length,
@@ -183,7 +197,7 @@ const commentsFetchGet = async (req, res) => {
     }
     return res
             .status(200)
-            .json({ success: true, message: "No comment!", data: {comments, authors: [], currentUser: req.user, replies: [], replyActorPairs: []},
+            .json({ success: true, message: "No comment!", data: {comments, authors: [], currentUser: req.user ? req.user : null, replies: [], replyActorPairs: []},
                 meta: {
                     items_per_page: limit ? +limit : 8,
                     current_page_items: comments.length,

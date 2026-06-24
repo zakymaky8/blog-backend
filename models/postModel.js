@@ -1,15 +1,24 @@
+const { generateSlugId } = require("../utils/utils")
 const {PrismaClient}  = require("@prisma/client");
 const prisma = new PrismaClient();
 
 
 module.exports = {
     createPost: async (entries, status, user) => {
+        const title = entries.title;
+        const postTitleExists = await prisma.post.findFirst({ where: { title: title } });
+
+        if (postTitleExists) {
+            return { success: false, message: "Title exists. modify it a bit." }
+        }
+
         const post = await prisma.post.create({
             data: {
                 content: entries.content,
                 status: status,
                 user_id: user.users_id,
                 title: entries.title,
+                slug: generateSlugId(entries.title),
                 excerpt: entries.excerpt,
                 suggnsToPost: entries.suggestion ? [entries.suggestion] : [],
                 readTime: +entries.timeRead,
@@ -25,7 +34,7 @@ module.exports = {
                 data: {
                     status: "ADDRESSED",
                     updatedAt: new Date(),
-                    postsToSugg: [post.posts_id]
+                    postsToSugg: [post.slug]
                 }
             })
         }
@@ -172,9 +181,9 @@ module.exports = {
             where: {
                 status: "PUBLISHED",
                 OR: [
-                    {content: {contains: search.trim(), mode: "insensitive"}},
-                    {title: {contains: search.trim(), mode: "insensitive"}},
-                    {excerpt: {contains: search.trim(), mode: "insensitive"}},
+                    { content: { contains: search.trim(), mode: "insensitive" } },
+                    { title: { contains: search.trim(), mode: "insensitive"} },
+                    { excerpt: { contains: search.trim(), mode: "insensitive" } },
                 ]
             },
             orderBy: {
@@ -218,8 +227,8 @@ module.exports = {
 
     // fetching a single post
 
-    fetchSinglePost: async ( postId, user ) => {
-        const post = await prisma.post.findFirst({where: {posts_id: postId}});
+    fetchSinglePost: async ( slugId, user ) => {
+        const post = await prisma.post.findFirst({where: {slug: slugId}});
         const suggestions =
                 (post && post.suggnsToPost.length > 0) ?
                     await Promise.all( post.suggnsToPost.map(sugg => prisma.suggestedTopics.findFirst({ where: { suggns_id: sugg } })))
@@ -228,7 +237,7 @@ module.exports = {
             const viewed = post.views.includes(user.users_id);
             const views = viewed ? post.views : [...post.views, user.users_id];
             await prisma.post.update({
-                where: { posts_id: postId },
+                where: { posts_id: post.posts_id },
                 data: { views: views }
             })
             return {post, suggestions}
@@ -237,23 +246,27 @@ module.exports = {
         }
     },
 
-    fetchSinglePubPost: async ( postId, user ) => {
+    fetchSinglePubPost: async ( slugId, user ) => {
         const post = await prisma.post.findFirst({
-            where: {posts_id: postId, status: "PUBLISHED"}
+            where: {slug: slugId, status: "PUBLISHED"}
         })
-        const suggestions = post.suggnsToPost.length > 0 ?
+        const suggestions = (post && post.suggnsToPost.length > 0) ?
             await Promise.all( post.suggnsToPost.map(sugg => prisma.suggestedTopics.findFirst({ where: { suggns_id: sugg } })))
             : [];
 
         if (post) {
-            const viewed = post.views.includes(user.users_id);
-            const views = viewed ? post.views : [...post.views, user.users_id];
-            await prisma.post.update({
-                where: { posts_id: postId },
-                data: { views: views }
-            })
+            if (user) {
+                const viewed = post.views.includes(user.users_id);
+                const views = viewed ? post.views : [...post.views, user.users_id];
+                await prisma.post.update({
+                    where: { posts_id: post.posts_id },
+                    data: { views: views }
+                })
+                return {post, suggestions}
+            }
             return {post, suggestions}
-        } else {
+        }
+        else {
             return false
         }
     },

@@ -120,7 +120,7 @@ module.exports = {
         await prisma.suggestedTopics.update({
             where: { suggns_id: body.suggId },
             data: {
-                    postsToSugg: [body.postId],
+                    postsToSugg: [body.slug],
                     status: "ADDRESSED"
                 }
         })

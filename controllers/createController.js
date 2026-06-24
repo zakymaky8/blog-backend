@@ -21,6 +21,12 @@ const postCreatePost = async (req, res) => {
 
     if (req.user && req.user.Role === "ADMIN" && allFields.every(e => Boolean(e))) {
         const post = await Post.createPost(req.body, status, req.user);
+        if (post.message) {
+            return res
+                    .status(400)
+                    .json({ success: false, message: post.message, post: null })    
+        }
+        
         return res
                  .status(201)
                  .json({success: true, message: "Post successfully created!", post: post})
@@ -134,3 +140,9 @@ module.exports = {
     replyCreatePost,
     createSuggessionPost
 }
+
+
+
+
+// Comment Turned off feature with "Status"
+//  enagement turned off feature with "Status"

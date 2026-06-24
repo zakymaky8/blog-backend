@@ -30,15 +30,15 @@ const readRoute = Router();
 
 readRoute.get(
     "/posts",
-    authenticateUser,
-    limitAccess,
+    // authenticateUser,
+    // limitAccess,
     allPublishedPostsGet
 );
 
 readRoute.get(
     "/posts/featured",
-    authenticateUser,
-    limitAccess,
+    // authenticateUser,
+    // limitAccess,
     highPriorityPostsGet
 );
 
@@ -49,9 +49,16 @@ readRoute.get(
 )
 
 readRoute.get(
-    "/posts/:postId",
+    "/posts/:slugId",
+    // authenticateUser,
+    // limitAccess,
+    singlePostGet
+)
+
+readRoute.get(
+    "/manage-posts/:slugId",
     authenticateUser,
-    limitAccess,
+    // limitAccess,
     singlePostGet
 )
 
@@ -67,6 +74,7 @@ readRoute.get(
     allPostsForAdminGet
 )
 
+//admin only
 readRoute.get(
     "/manage_posts/drafts",
     authenticateUser,

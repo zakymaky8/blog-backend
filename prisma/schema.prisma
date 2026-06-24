@@ -42,6 +42,7 @@ model SuggestedTopics {
 
 model Post {
   posts_id        String            @id @default(uuid())
+  slug            String            @unique @default("place-holder-1234")
   title           String
   content         String
   createdAt       DateTime          @default(now())
