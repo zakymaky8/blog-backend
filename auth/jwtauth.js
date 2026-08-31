@@ -9,17 +9,17 @@ const prisma = new PrismaClient();
 
 const getUserToken = async (req, res) => {
 
-    const  { username, password } = req.body;
+    const  { un_email, password } = req.body;
 
 
-    if ( !username || !password ) {
+    if ( !un_email || !password ) {
         return res
                 .status(400)
-                .json({ success: false, message: "Missing credential(s)!", token: null })
+                .json({ success: false, message: "Missing credential!", token: null })
     }
 
-    const user = await prisma.users.findFirst({where: {username: username}});
-    const matches = user ?  await bcrypt.compare(password, user.password) : false;
+    const user = await prisma.users.findFirst({ where: { OR: [{ username: un_email }, { email: un_email }] } });
+    const matches = user ?  await bcrypt.compare( password, user.password ) : false;
 
     if (!user) {
         return res
@@ -39,20 +39,29 @@ const getUserToken = async (req, res) => {
 
 const getAdminToken = async (req, res) => {
 
-    const { username, password, admin_pwd } = req.body;
+    const { un_email, password } = req.body;
 
-    if ( !username || !password || !admin_pwd) {
+    if ( !un_email || !password  ) {
         return res
                 .status(400)
                 .json({ success: false, message: "Missing credential(s)!", token: null })
     }
 
-    const user = await prisma.users.findFirst({where: {username: username}})
+    const user = await prisma.users.findFirst({
+        where: {
+            OR: [
+            { username: un_email },
+            { email: un_email }
+            ]
+        }
+    });
+
+    
     const matches = user ? await bcrypt.compare(password, user.password) : false;
 
-    if (user && matches && user.Role === "ADMIN" && admin_pwd === process.env.ADMIN_PASSWORD ) {
+    if (user && matches && user.Role === "ADMIN" ) {
 
-        const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {expiresIn: "2h"});
+        const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "2h" });
         return res
                  .json({success: true, token: token, message: "Successfully Logged In!"})
     }
@@ -61,7 +70,7 @@ const getAdminToken = async (req, res) => {
                  .status(404)
                  .json({success: false, message: "User is not found", token: null})
 
-    } else if (user && user.Role !== "ADMIN" || admin_pwd !== process.env.ADMIN_PASSWORD) {
+    } else if (user && user.Role !== "ADMIN") {
         return res
                  .status(403)
                  .json({success: false, message: "Access Denied!", token: null})
@@ -112,8 +121,6 @@ const checkLoginStatus = (req, res) => {
         req.user = user;
         const User = {...user};
         delete User.password
-        console.log(user)
-        console.log(User)
         return res
                  .status(200)
                  .json({ success: true, message: "Logged in!", user: {...User}})

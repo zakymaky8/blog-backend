@@ -3,6 +3,7 @@ const Post = require("../models/postModel");
 const User = require("../models/userModel");
 const Reply = require("../models/replyModel");
 const Suggestion = require("../models/suggestModel");
+const RoleModel = require("../models/roleModel");
 const jwt = require("jsonwebtoken");
 
 const allPublishedPostsGet = async (req, res) => {
@@ -527,6 +528,82 @@ const commentRepliesGet = async (req, res) => {
 }
 
 
+
+const getOpenRoles = async (req, res) => {
+    const openRoles = await RoleModel.getOpenRoles()
+    return res.status(200).json({ success: true, message: "successful", data: openRoles })
+
+}
+
+
+const getSingleOpenRole = async (req, res) => {
+
+    const { open_id } = req.params;
+
+    const openRoles = await RoleModel.getSingleOpenRole(open_id)
+    return res.status(200).json({ success: true, message: "successful", data: openRoles })
+
+}
+
+// only for admin
+const getAllRoleRequests = async (req, res) => {
+    
+    if (req.user.Role === "ADMIN") {
+        const requests = await RoleModel.getAdminOnlyRoleRequests();
+
+        return res.status(200).json({ success: true, message: "successful", data: requests })
+    }
+
+    else {
+        return res.status(403).json({ success: false, message: "forbidden request", data: null })
+    }
+}
+
+const getSingleRoleRequest = async (req, res) => {
+
+    if (req.body.Role === "ADMIN") {
+        const { request_id } = req.params;
+    
+        const request = await RoleModel.getSingleRoleRequest(request_id)
+        return res.status(200).json({ success: true, message: "successful", data: request })
+    }
+
+    else {
+        return res.status(403).json({ success: false, message: "forbidden", data: null })
+    }
+}
+// for MEC
+const getOnesRoleRequests = async (req, res) => {
+    
+    const requests = await RoleModel.getOnesRoleRequest(req.user.users_id)
+    return res.status(200).json({ success: true, message: "successful", data: requests })
+}
+
+
+const getRoles = async (req, res) => {
+    // if (req.user.Role === "ADMIN") {
+        const roles = await RoleModel.getRoles()
+        return res.status(200).json({ success: true, message: "successful", data: roles })
+    // }
+
+    // else {
+        // return res.status(200).json({ success: false, message: "forbidden", data: null })
+    // }
+}
+
+
+const getSingleRole = async (req, res) => {
+    // if (req.user.Role === "ADMIN") {
+        const { role_id } = req.params;
+        const role = await RoleModel.getOneRole(role_id)
+        return res.status(200).json({ success: true, message: "successful", data: role })
+    // }
+
+    // else {
+    //     return res.status(200).json({ success: false, message: "forbidden", data: null })
+    // }
+}
+
 module.exports = {
     allPublishedPostsGet,
     singlePostGet,
@@ -547,4 +624,11 @@ module.exports = {
     commentLikesGet,
     commentRepliesGet,
     commentDislikesGet,
+    getOpenRoles,
+    getSingleOpenRole,
+    getAllRoleRequests,
+    getSingleRoleRequest,
+    getOnesRoleRequests,
+    getRoles,
+    getSingleRole
 }

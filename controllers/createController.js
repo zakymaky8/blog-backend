@@ -2,6 +2,7 @@ const Comment = require("../models/commentModel");
 const Post = require("../models/postModel")
 const Reply = require("../models/replyModel")
 const User = require("../models/userModel")
+const Role = require("../models/roleModel");
 const Suggestion = require("../models/suggestModel");
 
 
@@ -121,7 +122,6 @@ const replyCreatePost = async (req, res) => {
 
 
 const createSuggessionPost = async (req, res) => {
-    console.log(req.body)
     if (req.body.content) {
         await Suggestion.createSuggestions(req.user, req.body);
         return res
@@ -134,15 +134,84 @@ const createSuggessionPost = async (req, res) => {
 }
 
 
+
+const initiateFirstAdminOnce = async (req, res) => {
+
+    
+    const creationRes = await User.initiateAdminCreationForOnce();
+    if (creationRes.success) {
+        return res.json({ creationRes })
+    }
+    else {
+        return res.status(403).json({ ...creationRes, message: "Request is forbidden!" })
+    }
+}
+
+
+
+const initiateRoleAllocation = async (req, res) => {
+
+    
+    const creationRes = await Role.initiateRolesAllocation();
+    if (creationRes.success) {
+        return res.json({ creationRes })
+    }
+    else {
+        return res.status(403).json({ ...creationRes, message: "Request is duplicated!" })
+    }
+}
+
+
+const createOpenRole = async ( req, res ) => {
+        if (req.user.Role === "ADMIN") {
+            const roleFromClient = req.body.role;
+
+            const roleInfo = await Role.getSingleRoleUsingRoleName(roleFromClient)
+
+            const createdOpenRole = await Role.createAdminOnlyOpenRole(req.body, roleInfo.role_id)
+            return res.status(201).json({ success: true, message: "Success", data: createOpenRole })
+        }
+        else {
+            return res.status(403).json({ success: false, message: "fail", data: null })
+        }
+}
+
+
+const createRoleRequest = async ( req, res ) => {
+
+        const roleFromClient = req.body.role;
+
+        const roleInfo = await Role.getSingleRoleUsingRoleName(roleFromClient)
+        const user = await User.fetchSingleUser(req.user.users_id)
+
+
+        if (user.Role === roleInfo.name) {
+            return res.status(400).json({ success: false, message: "You cannot request a role you already have!"})
+        }
+
+        if (req.user.Role !== "ADMIN") {
+            const createdRoleRequest = await Role.createMECOnlyRoleRequest(roleInfo.role_id, req.body, req.user.users_id)
+            return res.status(201).json({ success: true, message: "Request Successfully Made!", data: createdRoleRequest })
+        }
+        else {
+            return res.status(403).json({ success: false, message: "Admin can not make role change requests!", data: null })
+        }
+}
+
+
 module.exports = {
     postCreatePost,
     commentCreatePost,
     replyCreatePost,
-    createSuggessionPost
+    createSuggessionPost,
+    initiateFirstAdminOnce,
+    initiateRoleAllocation,
+    createOpenRole,
+    createRoleRequest
 }
 
 
 
 
 // Comment Turned off feature with "Status"
-//  enagement turned off feature with "Status"
+// Enagement turned off feature with "Status"

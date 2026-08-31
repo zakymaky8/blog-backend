@@ -17,7 +17,14 @@ const {
         postViewsGet,
         commentLikesGet,
         commentDislikesGet,
-        commentRepliesGet
+        commentRepliesGet,
+        getOpenRoles,
+        getSingleOpenRole,
+        getAllRoleRequests,
+        getSingleRoleRequest,
+        getOnesRoleRequests,
+        getRoles,
+        getSingleRole
     } = require("../controllers/readController");
 
 const { authenticateUser } = require("../auth/jwtauth");
@@ -162,6 +169,71 @@ readRoute.get(
 );
 
 
+// admin CRUD open role
+// admin CRUD role requests
+// Admin acts on role requests,
+// Announce botton on updates
+
+
+// MEC makes role request
+// MEC sees open roles
+// Receives update on role changes
+
+//TODO: we need user activities model as well
+
+/* api endpoints for roles activities
+    => GET api/roles/open-roles for admin and MEC ==> DONE FOR ALL
+    => POST api/roles/open-roles for admin ==> ==> done for admin
+    => PUT api/roles/open-roles for admin ==> done for admin
+    => DELETE api/roles/open-roles for admin ==> done for admin
+
+
+    => GET api/roles/role-requests for admin
+    => GET api/roles/role-requests/:request_id for admin
+    => POST api/roles/role-requests for MEC only
+    => PUT api/roles/role-requests/:request_id for MEC
+    => DELETE api/roles/role-requests/:request_id for MEC
+
+
+
+    
+*/
+
+
+// Member Creator and Editor
+readRoute.get("/roles/open")
+
+readRoute.get("/manage/roles/open/")
+
+readRoute.get("/manage/roles/requests")
+
+readRoute.get("/roles/availble-roles")
+
+// all authenticated roles apply
+readRoute.get("/roles/open-roles",
+    authenticateUser,
+    getOpenRoles
+) 
+// all authenticated role apply
+readRoute.get( "/roles/open-roles/:open_id", authenticateUser, getSingleOpenRole )
+
+// For MEC
+readRoute.get("/roles/role-requests/mine", authenticateUser, getOnesRoleRequests)
+
+// Admin only endpoint
+readRoute.get("/roles/role-requests", authenticateUser, getAllRoleRequests)
+readRoute.get("/roles/role-requests/:request_id", authenticateUser, getSingleRoleRequest)
+
+
+readRoute.get("/roles", authenticateUser, getRoles)
+
+readRoute.get("/roles/:role_id", authenticateUser, getSingleRole)
+
+
+
+/* 
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2Vyc19pZCI6ImVhZmYyYTkwLWI0NDUtNDM2OC1iMzVkLTlhMjIwNjk5ODc5OCIsImZpcnN0bmFtZSI6IlphY2giLCJsYXN0bmFtZSI6Ik1la3UiLCJlbWFpbCI6Inpha3lkZXY4QGdtYWlsLmNvbSIsInVzZXJuYW1lIjoiYWRtaW4temFjaCIsInBhc3N3b3JkIjoiJDJiJDEwJE1VNmw4c1pwLlVibTR0MUVRdVBSci51aUpIempuYTJJcVV2dVpRb0p5L29CdHMwVGs1Q0RXIiwiUm9sZSI6IkFETUlOIiwicm9sZV9zdGF0dXMiOiJBQ1RJVkUiLCJjcmVhdGVkQXQiOiIyMDI2LTA4LTA0VDEzOjQxOjU1Ljc4NloiLCJ1cGRhdGVkQXQiOiIyMDI2LTA4LTA0VDEzOjQxOjU1Ljc4NloiLCJpc1dhcm5lZCI6ZmFsc2UsImlzT3duZXIiOnRydWUsInByb2ZpbGVQaWMiOm51bGwsImlhdCI6MTc4NjQ1MTMyNSwiZXhwIjoxNzg2NDU4NTI1fQ.Jl2CmXY-uG_8GHUU2C0apRkfQ4M0YIUWmBEdvdsUO1o
+*/
+
+
 module.exports = { readRoute }
-
-
