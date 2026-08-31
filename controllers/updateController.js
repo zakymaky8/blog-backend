@@ -3,6 +3,7 @@ const Comment = require("../models/commentModel");
 const Reply = require("../models/replyModel");
 const User = require("../models/userModel");
 const Suggestion = require("../models/suggestModel");
+const Role = require("../models/roleModel")
 
 
 const updatePost = async (req, res) => {
@@ -211,6 +212,87 @@ const updatePostToSuggToPostPut = async (req, res) => {
             .json({ success: false, message: "Something is Missing!" })
 }
 
+
+const updateOpenRoleForAdmin = async (req, res) => {
+
+    const { open_id } = req.params;
+
+    if (req.user.Role === "ADMIN") {
+
+        // do some user input validation here for updatable information
+        const roleFromClient = req.body.role;
+        const roleInfo = await Role.getSingleRoleUsingRoleName(roleFromClient)
+        const updatedOpenRole = await Role.updateAdminOnlyOpenRole(open_id, req.body, roleInfo.role_id);
+        return res.status(200).json({ success: true, message: "success", data: updatedOpenRole })
+    }
+
+    return res.status(403).json({ success: false, message: "fail", data: null });
+}
+
+
+// existing strucre is planned for status updates
+
+const updateRoleRequest = async (req, res) => {
+
+    const roleFromClient = req.body.role;
+    const roleInfo = await Role.getSingleRoleUsingRoleName(roleFromClient)
+    const user = await User.fetchSingleUser(req.user.users_id)
+
+    const { request_id } = req.params;
+
+    if (user.Role === roleInfo.name) {
+        return res.status(400).json({ success: false, message: "You cannot request a role you already have!"})
+    }
+
+    const updatedRequest = await Role.updateMECOnlyRoleRequest(req.user.users_id, request_id, req.body, roleInfo.role_id);
+
+    if (updatedRequest) {
+        return res.status(200).json({ success: true, message: "success", data: updatedRequest });
+    }
+
+    else {
+        return res.status(400).json({ success: true, message: "Invalid Request!" });
+    }
+}
+
+
+
+const changeRoleStatus = async (req, res) => {
+
+    // user_id
+    // role, user changing into
+    // drive: request, random
+    // requestId
+    // req.user from authentication
+
+    // user role will be changed
+    // request status will be accepted
+
+    const isSuccess = await Role.changeUserRoleStatus(req.user.users_id, req.body);
+
+    if (isSuccess) {
+        return res.status(200).json({ success: true, message: "Role Update Successful!" })
+    }
+
+    else return res.status(200).json({ success: false, message: "Role Update Unsuccessful!" })
+
+}
+
+
+
+
+const rejectReqStatus = async (req, res) => {
+    const { requestId } = req.params;
+
+    if (req.user.Role === "ADMIN") {
+        await Role.rejectRoleRequest(req.user.users_id, requestId);
+        return res.status(200).json({ success: true, message: "Request Rejected!" })
+    }
+
+    return res.status(403).json({ success: false, message: "Not Allowed!" })
+    
+}
+
 module.exports = {
     updatePost,
     updateComment,
@@ -218,5 +300,9 @@ module.exports = {
     updateUserPwdPut,
     updateSuggestionPut,
     updateSuggestionStatusPut,
-    updatePostToSuggToPostPut
+    updatePostToSuggToPostPut,
+    updateOpenRoleForAdmin,
+    updateRoleRequest,
+    changeRoleStatus,
+    rejectReqStatus
 }

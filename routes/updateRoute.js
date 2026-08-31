@@ -6,7 +6,11 @@ const {
        updateUserPwdPut,
        updateSuggestionPut,
        updateSuggestionStatusPut,
-       updatePostToSuggToPostPut
+       updatePostToSuggToPostPut,
+       updateOpenRoleForAdmin,
+       updateRoleRequest,
+       changeRoleStatus,
+       rejectReqStatus
 } = require("../controllers/updateController");
 
 const { authenticateUser } = require("../auth/jwtauth");
@@ -30,6 +34,17 @@ updateRoute.put("/suggestions/status/:suggId", authenticateUser, updateSuggestio
 updateRoute.put("/suggestions/post-to-sugg-to-post", authenticateUser, updatePostToSuggToPostPut)
 
 updateRoute.put("/suggestions/:suggId", authenticateUser, updateSuggestionPut)
+
+updateRoute.put("/roles/open-roles/:open_id", authenticateUser, updateOpenRoleForAdmin)
+
+updateRoute.put("/roles/role-request/:request_id", authenticateUser, updateRoleRequest)
+
+updateRoute.put("/roles/status-change/", authenticateUser, changeRoleStatus)
+
+updateRoute.put("/roles/status-change/reject/:requestId", authenticateUser, rejectReqStatus)
+
+
+
 
 module.exports = {
     updateRoute

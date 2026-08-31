@@ -3,7 +3,11 @@ const {
     postCreatePost,
     commentCreatePost,
     replyCreatePost,
-    createSuggessionPost
+    createSuggessionPost,
+    initiateFirstAdminOnce,
+    initiateRoleAllocation,
+    createOpenRole,
+    createRoleRequest
 } = require("../controllers/createController");
 
 const { authenticateUser } = require("../auth/jwtauth");
@@ -42,6 +46,34 @@ createRouter.post(
     createSuggessionPost
 )
 
+
+createRouter.post(
+    "/user/initiate-first-admin-once",
+    initiateFirstAdminOnce
+)
+
+createRouter.post(
+    "/roles/initiate-role-allocation",
+    initiateRoleAllocation
+)
+
+// Admin Only endpoint
+createRouter.post(
+    "/roles/open-roles",
+    authenticateUser,
+    createOpenRole
+)
+
+
+// for MEC
+createRouter.post(
+    "/roles/role-requests",
+    authenticateUser,
+    createRoleRequest
+)
+
+
+
 module.exports = {
-    createRouter: createRouter
+    createRouter
 }

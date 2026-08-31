@@ -11,17 +11,22 @@ model Users {
   users_id        String            @id @default(uuid())
   firstname       String
   lastname        String
+  email           String            @unique @default("")
   username        String            @unique
   password        String
   post            Post[]
-  Role            Role              @default(USER)
+  Role            Role              @default(MEMBER)
+  role_status     Role_Status       @default(ACTIVE)
   comments        Comment[]
   createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @default(now())
   replyer         Reply[]           @relation("replyer")
   replied         Reply[]           @relation("replied_user")
   isWarned        Boolean           @default(false)
+  isOwner         Boolean           @default(false)
   profilePic      String?
   suggestedTopics SuggestedTopics[]
+  Role_Request    Role_Request[]
 }
 
 model SuggestedTopics {
@@ -94,6 +99,120 @@ model Reply {
   dislikes   String[] @default([])
 }
 
+model Roles {
+  role_id       String         @id @default(uuid())
+  name          Role           @unique
+  open_roles    Open_Role[]
+  role_requests Role_Request[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @default(now()) @updatedAt
+}
+
+model Open_Role {
+  open_id     String   @id @default(uuid())
+  role_id     String
+  title       String
+  description String?
+  role        Roles    @relation(fields: [role_id], references: [role_id])
+  notes       String
+  slots       Int
+  isActive    Boolean
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
+}
+
+model Role_Request {
+  request_id        String @id @default(uuid())
+  role_id           String
+  role              Roles  @relation(fields: [role_id], references: [role_id])
+  value_proposition String
+  contact           String
+  user_id           String
+  status            Role_Request_Status   @default(PENDING)
+  user              Users  @relation(fields: [user_id], references: [users_id])
+
+  reviewed_at DateTime?
+  reviewed_by String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @default(now()) @updatedAt
+}
+
+model Tags {
+  tag_id String @id @default(uuid())
+
+  name        String  @unique
+  slug        String  @unique
+  description String?
+
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now()) @updatedAt
+}
+
+model Content_Formats {
+  format_id String @id @default(uuid())
+
+  name        String  @unique
+  slug        String  @unique
+  description String?
+
+  isActive Boolean @default(true)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now()) @updatedAt
+  icon       String?
+}
+
+model Content_Category {
+  category_id String @id @default(uuid())
+
+  name        String  @unique
+  slug        String  @unique
+  description String?
+
+  image String?
+  icon  String?
+
+  display_order Int     @default(0)
+  isActive      Boolean @default(true)
+
+  created_at  DateTime              @default(now())
+  updated_at  DateTime              @default(now()) @updatedAt
+  subcategory Content_SubCategory[]
+}
+
+model Content_SubCategory {
+  subcategory_id String @id @default(uuid())
+
+  category_id String
+  category    Content_Category @relation(fields: [category_id], references: [category_id])
+
+  name        String
+  slug        String
+  description String?
+
+  display_order Int     @default(0)
+  isActive      Boolean @default(true)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now()) @updatedAt
+
+  @@unique([category_id, name])
+  @@unique([category_id, slug])
+}
+
+model Content_Languages {
+  language_id String @id @default(uuid())
+
+  name        String
+  code        String  @unique
+  native_name String?
+
+  isActive Boolean @default(true)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now()) @updatedAt
+}
+
 enum Status {
   DRAFT
   PUBLISHED
@@ -101,7 +220,15 @@ enum Status {
 
 enum Role {
   ADMIN
-  USER
+  EDITOR
+  CREATOR
+  MEMBER
+}
+
+enum Role_Status {
+  SUSPENDED
+  ACTIVE
+  DEACTIVATED
 }
 
 enum Priority {
@@ -114,4 +241,11 @@ enum SuggStatus {
   DENIED
   ADDRESSED
   PENDING
+}
+
+enum Role_Request_Status {
+  PENDING
+  APPROVED
+  REJECTED
+  WITHDRAWN
 }

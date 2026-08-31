@@ -3,6 +3,7 @@ const Comment = require("../models/commentModel")
 const Reply = require("../models/replyModel")
 const User = require("../models/userModel")
 const Suggestion = require("../models/suggestModel");
+const Role = require("../models/roleModel")
 
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient()
@@ -134,10 +135,43 @@ const removeSuggestion = async (req, res) => {
 }
 
 
+const deleteOpenRole = async (req, res) => {
+    const { open_id } = req.params;
+
+    if (req.user.Role === "ADMIN") {
+        await Role.deleteAdminOnlyOpenRole(open_id);
+        return res.status(200).json({ success: true, message: "Successfully deleted!" })
+    }
+
+    else {
+        return res.status(403).json({ success: false, message: "Request Forbidden!", data: null })
+    }
+}
+
+
+const deleteRoleRequest = async (req, res) => {
+    const { request_id } = req.params;
+        const deleteRes = await Role.deleteMECOnlyRoleRequest(req.user, request_id);
+
+        if (deleteRes) {
+            return res.status(200).json({ success: true, message: "Successfully deleted!" })
+        }
+
+        else {
+            return res.status(403).json({ success: false, message: "Not found or forbidden" })
+        }
+        
+}
+
+
+
+
 module.exports = {
     deleteSinglePost,
     commentDeletePost,
     deleteReply,
     deleteOneUser,
-    removeSuggestion
+    removeSuggestion,
+    deleteOpenRole,
+    deleteRoleRequest
 }

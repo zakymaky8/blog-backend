@@ -4,7 +4,9 @@ const {
         commentDeletePost,
         deleteReply,
         deleteOneUser,
-        removeSuggestion
+        removeSuggestion,
+        deleteOpenRole,
+        deleteRoleRequest
     } = require("../controllers/deleteController");
 
 const { authenticateUser } = require("../auth/jwtauth");
@@ -46,6 +48,11 @@ deleteRouter
         authenticateUser,
         removeSuggestion
     )
+
+deleteRouter.delete("/roles/open-roles/:open_id", authenticateUser, deleteOpenRole)
+
+deleteRouter.delete("/roles/role-requests/:request_id", authenticateUser, deleteRoleRequest)
+
 
 module.exports = {
     deleteRouter

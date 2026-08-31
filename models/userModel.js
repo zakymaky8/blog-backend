@@ -12,21 +12,22 @@ module.exports = {
                 lastname: entries.lastname,
                 password: await bcrypt.hash(entries.password, 10),
                 username: entries.username,
-                Role: "USER"
+                email: entries.email,
+                Role: "MEMBER"
             }
         })
     },
-    createAdmin: async (entries) => {
-        return await prisma.users.create({
-            data:  {
-                firstname: entries.firstname,
-                lastname: entries.lastname,
-                password: await bcrypt.hash(entries.password, 10),
-                username: entries.username,
-                Role: "ADMIN"
-            }
-        })
-    },
+    // createAdmin: async (entries) => {
+    //     return await prisma.users.create({
+    //         data:  {
+    //             firstname: entries.firstname,
+    //             lastname: entries.lastname,
+    //             password: await bcrypt.hash(entries.password, 10),
+    //             username: entries.username,
+    //             Role: "ADMIN"
+    //         }
+    //     })
+    // },
     fetchAllUsers: async (page=1, search="", limit=6) => {
         const users = await prisma.users.findMany({
                     where: {
@@ -172,9 +173,6 @@ module.exports = {
         })) : null
         return paired.sort(({ comment:a }, { comment: b }) => b.createdAt - a.createdAt)
     },
-    getUser: async () => {
-        console.log(await prisma.users.findMany())
-    },
 
     updateUserProfInfo: async (entries, user) => {
         try {
@@ -203,8 +201,30 @@ module.exports = {
             }
         })
         return true
+    },
+
+
+    initiateAdminCreationForOnce: async () => {
+        const userExists = await prisma.users.findFirst({ where: { username:  "admin-zach", Role: "ADMIN"} });
+
+        if (userExists) {
+            return { success: false, data: null }
+        }
+
+        const password = process.env.INITIAL_ADMIN_PASSWORD;
+        const hashedPassword = await bcrypt.hash(password, 10);
+        
+        const user = await prisma.users.create( { 
+            data: {
+                firstname: "Zach",
+                lastname: "Meku",
+                email: "zakydev8@gmail.com",
+                password: hashedPassword,
+                username: "admin-zach",
+                isOwner: true,
+                Role: "ADMIN",
+            }
+         })
+         return { success: true, data: user }
     }
 }
-
-
-// module.exports.getUser()

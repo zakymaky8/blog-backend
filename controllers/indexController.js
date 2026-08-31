@@ -7,18 +7,18 @@ const { PrismaClient }  = require("@prisma/client");
 const prisma = new PrismaClient();
 
 const registerUser = async (req, res) => {
-    const { username, password } = req.body;
-    if (!username || !password) {
+    const { username, password, email } = req.body;
+    if (!username || !password || !email) {
         return res
                 .status(400)
                 .json({ success: false, message: "Missing credential(s)!", token: null })
     }
 
-    const exists =  await prisma.users.findFirst({ where: { username: username } });
+    const exists =  await prisma.users.findFirst({ where: { OR: [{ username: username }, { email: email }] } });
     if (exists) {
         return res
                 .status(409)
-                .json({ success: false, message: "username already exists", user: null})
+                .json({ success: false, message: "Username/Email already exists!", user: null})
     }
     else {
         const user = await User.createUser(req.body)
