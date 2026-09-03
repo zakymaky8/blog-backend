@@ -6,6 +6,8 @@ const Suggestion = require("../models/suggestModel");
 const RoleModel = require("../models/roleModel");
 const jwt = require("jsonwebtoken");
 
+const bcrypt = require("bcrypt");
+
 const allPublishedPostsGet = async (req, res) => {
 
     const { search, page, limit } = req.query;

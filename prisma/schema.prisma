@@ -213,6 +213,16 @@ model Content_Languages {
   updated_at DateTime @default(now()) @updatedAt
 }
 
+
+// model ContentFromat {
+//   format_id   String  @default(uuid())
+//   name        String
+//   continent   String
+//   country     String
+// }
+
+
+
 enum Status {
   DRAFT
   PUBLISHED
